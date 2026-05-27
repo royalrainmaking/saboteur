@@ -668,7 +668,9 @@ body {
     background: linear-gradient(145deg, #2c3e50, #1a252f);
 }
 
-.hand-card .action-content {
+.hand-card .action-content,
+.ghost-card .action-content,
+.card-cell .action-content {
     position: absolute;
     inset: 0;
     display: flex;
@@ -679,13 +681,17 @@ body {
     padding: 8px;
 }
 
-.hand-card .action-icon {
+.hand-card .action-icon,
+.ghost-card .action-icon,
+.card-cell .action-icon {
     font-size: 32px;
     line-height: 1;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
-.hand-card .action-label {
+.hand-card .action-label,
+.ghost-card .action-label,
+.card-cell .action-label {
     font-size: 11px;
     font-weight: 800;
     color: #fff;
@@ -1202,4 +1208,46 @@ body {
     66% {
         transform: translateY(10px) rotate(-15deg);
     }
+}
+
+/* 🎬 Animations & Ghost Card Styles */
+.ghost-card {
+    position: fixed;
+    width: 90px;
+    height: 120px;
+    background: var(--card-bg);
+    border: 3px solid #1a1105;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 15px var(--gold-glow);
+    z-index: 9999;
+    pointer-events: none;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    overflow: hidden;
+}
+
+.ghost-card.action-card {
+    background: linear-gradient(145deg, #2c3e50, #1a252f);
+}
+
+.ghost-card.goal-card {
+    width: 90px;
+    height: 120px;
+    background: var(--card-bg);
+    border: 3px solid var(--gold);
+}
+
+.ghost-card.goal-card.face-down {
+    background: repeating-linear-gradient(45deg, #1f140d, #1f140d 10px, #2a1b12 10px, #2a1b12 20px);
+    color: var(--gold);
+    font-size: 2.5rem;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.ghost-card.goal-card.face-down::after {
+    content: '?';
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
 }
