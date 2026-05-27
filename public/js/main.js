@@ -85,6 +85,11 @@ document.getElementById('btn-join').addEventListener('click', () => {
 
 document.getElementById('btn-start').addEventListener('click', () => socket.emit('startGame'));
 document.getElementById('btn-ready').addEventListener('click', () => socket.emit('toggleReady'));
+document.getElementById('btn-leave-lobby').addEventListener('click', () => {
+    socket.emit('leaveRoom');
+    localStorage.removeItem('saboteur_session');
+    switchScreen('login');
+});
 
 // ─── Socket Handlers ──────────────────────────────────────────────────────────
 socket.on('connect', () => { myId = socket.id; });
@@ -118,6 +123,12 @@ socket.on('actionAnimation', (animData) => {
 });
 
 socket.on('errorMsg', (msg) => showToast(msg));
+
+socket.on('kicked', () => {
+    showToast('❌ คุณถูกเตะออกจากห้อง');
+    localStorage.removeItem('saboteur_session');
+    switchScreen('login');
+});
 
 socket.on('mapReveal', ({ goalType }) => {
     const modal = document.getElementById('map-reveal-modal');
@@ -206,10 +217,18 @@ function renderLobby() {
 
         if (p.id === myId) badgesHtml += '<span class="badge" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">(คุณ)</span>';
 
+        let kickHtml = '';
+        if (me && me.isHost && !p.isHost) {
+            kickHtml = `<button class="btn btn-kick" style="padding: 4px 8px; font-size: 0.8rem; background: rgba(229, 57, 53, 0.1); color: var(--danger); border: 1px solid rgba(229, 57, 53, 0.3); border-radius: 4px; font-weight: bold; margin-left: 8px;" onclick="kickPlayer('${p.id}')">❌ เตะ</button>`;
+        }
+
         div.innerHTML = `
             <div class="player-avatar">${p.avatar}</div>
             <div class="player-name" style="${p.id === myId ? 'color:var(--gold)' : ''}">${p.name}</div>
-            <div class="player-badges">${badgesHtml}</div>
+            <div class="player-badges" style="display:flex; align-items:center; gap:4px;">
+                ${badgesHtml}
+                ${kickHtml}
+            </div>
         `;
         list.appendChild(div);
 
@@ -1062,3 +1081,6 @@ function playAnimation(animData) {
         }
     }
 })();
+window.kickPlayer = (playerId) => {
+    socket.emit('kickPlayer', { targetPlayerId: playerId });
+};

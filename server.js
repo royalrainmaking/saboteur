@@ -166,6 +166,53 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('leaveRoom', () => {
+        if (currentRoom && games[currentRoom]) {
+            const game = games[currentRoom];
+            if (game.status === 'lobby') {
+                game.removePlayer(socket.id);
+                socket.leave(currentRoom);
+                
+                if (game.players.length === 0) {
+                    delete games[currentRoom];
+                } else {
+                    if (!game.players.find(p => p.isHost) && game.players.length > 0) {
+                        game.players[0].isHost = true;
+                    }
+                    game.players.forEach(p => {
+                        io.to(p.id).emit('gameState', game.getState(p.id));
+                    });
+                }
+                currentRoom = null;
+            }
+        }
+    });
+
+    socket.on('kickPlayer', ({ targetPlayerId }) => {
+        if (currentRoom && games[currentRoom]) {
+            const game = games[currentRoom];
+            const me = game.players.find(p => p.id === socket.id);
+            
+            if (me && me.isHost && game.status === 'lobby') {
+                const targetPlayer = game.players.find(p => p.id === targetPlayerId);
+                if (targetPlayer) {
+                    io.to(targetPlayerId).emit('kicked');
+                    game.removePlayer(targetPlayerId);
+                    
+                    const targetSocket = io.sockets.sockets.get(targetPlayerId);
+                    if (targetSocket) {
+                        targetSocket.leave(currentRoom);
+                    }
+                    
+                    game.players.forEach(p => {
+                        io.to(p.id).emit('gameState', game.getState(p.id));
+                    });
+                    console.log(`Player kicked: ${targetPlayer.name} by host ${me.name} in room ${currentRoom}`);
+                }
+            }
+        }
+    });
+
     socket.on('disconnect', () => {
         console.log('Player disconnected: ' + socket.id);
         if (currentRoom && games[currentRoom]) {
