@@ -122,7 +122,12 @@ socket.on('actionAnimation', (animData) => {
     });
 });
 
-socket.on('errorMsg', (msg) => showToast(msg));
+socket.on('errorMsg', (msg) => {
+    showToast(msg);
+    if (msg && (msg.includes("ไม่พบห้องดังกล่าว") || msg.includes("คุณไม่ได้อยู่ในห้อง"))) {
+        localStorage.removeItem('saboteur_session');
+    }
+});
 
 socket.on('kicked', () => {
     showToast('❌ คุณถูกเตะออกจากห้อง');
@@ -191,7 +196,8 @@ function render() {
         if (gameState.status === 'finished') {
             renderGameOver();
             document.getElementById('game-over-modal').classList.remove('hidden');
-            localStorage.removeItem('saboteur_session');
+        } else {
+            document.getElementById('game-over-modal').classList.add('hidden');
         }
     }
     _lastStatus = gameState.status;

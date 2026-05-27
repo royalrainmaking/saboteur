@@ -259,7 +259,7 @@ io.on('connection', (socket) => {
                 const userId = player.userId;
                 game.removePlayer(socket.id); // Marks offline if playing, removes if lobby
 
-                if (game.status === 'playing') {
+                if (game.status === 'playing' || game.status === 'finished') {
                     // Update state so players see offline indicator
                     game.players.forEach(p => {
                         io.to(p.id).emit('gameState', game.getState(p.id));

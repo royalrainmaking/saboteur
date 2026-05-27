@@ -136,7 +136,7 @@ class Game {
 
         const player = this.players[pIdx];
 
-        if (this.status === 'playing') {
+        if (this.status === 'playing' || this.status === 'finished') {
             player.connected = false;
             this.addLog(`🔌 ${player.name} หลุดการเชื่อมต่อ`);
             return;
