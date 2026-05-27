@@ -854,7 +854,7 @@ function renderLastDiscard() {
 }
 
 // ─── Resize ───────────────────────────────────────────────────────────────────
-}
+window.addEventListener('resize', () => { if (gameState && gameState.status !== 'lobby') renderBoard(); });
 
 // ─── Animations ───────────────────────────────────────────────────────────────
 function playAnimation(animData) {
