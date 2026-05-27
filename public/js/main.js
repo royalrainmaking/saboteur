@@ -50,7 +50,7 @@ function showToast(msg) {
 }
 
 // ─── Avatar Picker ───────────────────────────────────────────────────────────────
-const AVATAR_LIST = ['⛏️', '🧔', '🧙‍♂️', '👨‍🔧', '👩‍🔧', '👷‍♂️', '👷‍♀️', '🤇', '👽', '🦊', '🐻', '🐉', '🦨', '💀', '👻'];
+const AVATAR_LIST = ['⛏️', '🧔', '🧙‍♂️', '👨‍🔧', '👩‍🔧', '👷‍♂️', '👷‍♀️', '👽', '🦊', '🐻', '🐉', '🦨', '💀', '👻'];
 
 (function buildAvatarPicker() {
     const picker = document.getElementById('avatar-grid');
