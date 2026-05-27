@@ -567,9 +567,8 @@ class Game {
             lastDiscard: this.lastDiscard
         };
     }
-}
 
-_distributeGold(winnerSide, winningPlayerId) {
+    _distributeGold(winnerSide, winningPlayerId) {
         this.roundGoldDrawn = [];
         this.roundGoldDistribution = {};
         
@@ -691,5 +690,6 @@ _distributeGold(winnerSide, winningPlayerId) {
         this.addLog(`🚪 สิ้นสุดเกมแมตช์ใหญ่! ผู้เล่นทั้งหมดกลับเข้าสู่ล็อบบี้หลักเรียบร้อย`);
         return true;
     }
+}
 
 module.exports = { Game };
