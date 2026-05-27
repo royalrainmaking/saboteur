@@ -171,13 +171,31 @@
                     <!-- Round Gold Distribution -->
                     <div id="round-gold-summary" style="margin-top: 15px; margin-bottom: 20px; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
                         <h3 style="font-size: 0.95rem; color: var(--gold); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px;">💰 ทองที่ได้รับรอบนี้</h3>
-                        <div id="round-gold-list" style="display: flex; flex-direction: column; gap: 6px; font-size: 0.95rem;"></div>
+                        <table class="summary-table">
+                            <thead>
+                                <tr>
+                                    <th>ผู้เล่น</th>
+                                    <th style="text-align:center; width: 100px;">บทบาท</th>
+                                    <th style="text-align:right; width: 100px;">ทองที่ได้</th>
+                                </tr>
+                            </thead>
+                            <tbody id="round-gold-list"></tbody>
+                        </table>
                     </div>
 
                     <!-- Overall Leaderboard -->
                     <div id="overall-standings-section" style="margin-top: 15px; margin-bottom: 20px; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
                         <h3 style="font-size: 0.95rem; color: var(--gold); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px;">📊 คะแนนสะสมทองทั้งหมด (3 รอบ)</h3>
-                        <div id="standings-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                        <table class="summary-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 80px;">อันดับ</th>
+                                    <th>ผู้เล่น</th>
+                                    <th style="text-align:right; width: 100px;">ทองรวม</th>
+                                </tr>
+                            </thead>
+                            <tbody id="standings-list"></tbody>
+                        </table>
                     </div>
 
                     <div class="game-over-roles" style="margin-top: 20px; text-align: left;">

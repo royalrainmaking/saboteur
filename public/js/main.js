@@ -847,13 +847,23 @@ function renderGameOver() {
     gameState.players.forEach(p => {
         const goldVal = (gameState.roundGoldDistribution && gameState.roundGoldDistribution[p.id]) || 0;
         const roleIcon = p.role === 'miner' ? '⛏️' : '💣';
-        const row = document.createElement('div');
-        row.style.cssText = 'display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.02);';
-        row.innerHTML = `
-            <span>${p.avatar || '🧔'} <b>${p.name}</b> (${roleIcon} ${p.role === 'miner' ? 'นักขุด' : 'คนทรยศ'})${p.id === myId ? ' (คุณ)' : ''}</span>
-            <span style="color: var(--gold); font-weight: bold;">+${goldVal} ก้อน</span>
+        const roleNameText = p.role === 'miner' ? 'นักขุด' : 'คนทรยศ';
+        const tr = document.createElement('tr');
+        if (p.id === myId) tr.style.background = 'rgba(255, 255, 255, 0.04)';
+        
+        tr.innerHTML = `
+            <td>
+                <span style="font-size: 1.2rem; margin-right: 6px;">${p.avatar || '🧔'}</span>
+                <b>${p.name}</b>${p.id === myId ? ' (คุณ)' : ''}
+            </td>
+            <td style="text-align: center;">
+                <span class="badge-role ${p.role}">${roleIcon} ${roleNameText}</span>
+            </td>
+            <td style="text-align: right; color: var(--gold); font-weight: bold;">
+                +${goldVal} ก้อน
+            </td>
         `;
-        goldListEl.appendChild(row);
+        goldListEl.appendChild(tr);
     });
 
     // 2. Render overall cumulative standings
@@ -861,22 +871,33 @@ function renderGameOver() {
     standingsListEl.innerHTML = '';
     const sorted = [...gameState.players].sort((a, b) => b.goldTotal - a.goldTotal);
     sorted.forEach((p, rank) => {
-        const row = document.createElement('div');
-        row.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 6px; margin-bottom: 4px;';
+        const tr = document.createElement('tr');
         
-        let rankBadge = rank === 0 ? '👑' : rank === 1 ? '🥈' : rank === 2 ? '🥉' : `${rank + 1}.`;
+        let rankBadge = rank === 0 ? '👑 1' : rank === 1 ? '🥈 2' : rank === 2 ? '🥉 3' : `${rank + 1}`;
         
-        if (rank === 0 && gameState.round === 3) {
-            row.style.background = 'rgba(251, 192, 45, 0.15)';
-            row.style.border = '1px solid var(--gold)';
-            p.name = '🏆 ' + p.name; // Tag grand champion
+        if (rank === 0) {
+            tr.className = 'rank-highlight';
+            if (gameState.round === 3) {
+                tr.style.background = 'rgba(251, 192, 45, 0.12)';
+                p.name = '🏆 ' + p.name; // Tag grand champion
+            }
+        }
+        if (p.id === myId) {
+            tr.style.borderLeft = '3px solid rgba(251, 192, 45, 0.8)';
+            tr.style.background = 'rgba(255, 255, 255, 0.04)';
         }
 
-        row.innerHTML = `
-            <span>${rankBadge} ${p.avatar || '🧔'} <b>${p.name}</b>${p.id === myId ? ' (คุณ)' : ''}</span>
-            <span style="color: var(--gold); font-weight: 800; font-size: 1.05rem;">${p.goldTotal} ก้อน</span>
+        tr.innerHTML = `
+            <td style="font-weight: 800; font-size: 1.05rem;">${rankBadge}</td>
+            <td>
+                <span style="font-size: 1.2rem; margin-right: 6px;">${p.avatar || '🧔'}</span>
+                <b>${p.name}</b>${p.id === myId ? ' (คุณ)' : ''}
+            </td>
+            <td style="text-align: right; color: var(--gold); font-weight: 800; font-size: 1.05rem;">
+                ${p.goldTotal} ก้อน
+            </td>
         `;
-        standingsListEl.appendChild(row);
+        standingsListEl.appendChild(tr);
     });
 
     // 3. Render roles this round
