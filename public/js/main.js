@@ -922,6 +922,8 @@ function renderGameOver() {
     nextBtn.classList.add('hidden');
     lobbyBtn.classList.add('hidden');
     waitMsg.classList.add('hidden');
+    nextBtn.disabled = false;
+    lobbyBtn.disabled = false;
 
     const isMeHost = gameState.me && gameState.me.isHost;
 
