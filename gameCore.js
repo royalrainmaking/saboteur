@@ -447,7 +447,11 @@ class Game {
                         this.roundWinnerId = player.id;
                         this._distributeGold('miners', player.id);
                     } else {
-                        this.addLog(`🪨 ขุดพบถ่านหินที่ (${x + dir.dx},${y + dir.dy})! เกมยังดำเนินต่อเพื่อหาขุมทองคำ`);
+                        this.addLog(`🪨 นักขุดประมาท! ขุดไปเจอถ่านหิน ถ้ำถล่มปิดตาย คนทรยศชนะ!`);
+                        this.status = 'finished';
+                        this.winner = 'saboteurs';
+                        this.roundWinnerId = player.id;
+                        this._distributeGold('saboteurs', player.id);
                     }
                 }
             }
