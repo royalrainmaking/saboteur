@@ -907,18 +907,21 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 15px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
     text-transform: none;
-    box-shadow: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     width: 100%;
+    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    cursor: pointer;
 }
 
 .target-player-btn:hover {
-    background: rgba(251, 192, 45, 0.15);
+    background: linear-gradient(135deg, rgba(251, 192, 45, 0.15), rgba(251, 192, 45, 0.05));
     border-color: var(--gold);
-    transform: translateX(5px);
+    box-shadow: 0 0 15px rgba(251, 192, 45, 0.25);
+    transform: translateY(-2px);
 }
 
 .target-p-info {
@@ -1104,17 +1107,41 @@ body {
     max-width: 380px;
 }
 
+.fix-choice-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
 .fix-option-btn {
-    font-size: 1.2rem;
-    font-weight: bold;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid #555;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 24px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
     color: #fff;
+    font-family: var(--font-body);
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
 .fix-option-btn:hover {
-    background: rgba(76, 175, 80, 0.2);
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05));
     border-color: var(--success);
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+    transform: translateY(-2px);
+}
+
+.fix-option-btn:active {
+    transform: translateY(1px);
 }
 
 /* Utilities */
