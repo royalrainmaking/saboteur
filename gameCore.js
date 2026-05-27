@@ -71,19 +71,21 @@ class Game {
 
     // ─── Lobby ────────────────────────────────────────────────────────────────
 
-    addPlayer(socketId, name, avatar) {
+    addPlayer(socketId, name, avatar, userId) {
         if (this.status !== 'lobby') return false;
         if (this.players.length >= 10) return false;
 
         this.players.push({
             id: socketId,
+            userId: userId || socketId,
             name,
             avatar: avatar || AVATARS[this.players.length % AVATARS.length],
             isHost: this.players.length === 0,
             isReady: false,
             role: null,
             hand: [],
-            brokenTools: { pickaxe: false, lantern: false, cart: false }
+            brokenTools: { pickaxe: false, lantern: false, cart: false },
+            connected: true
         });
         return true;
     }
@@ -96,6 +98,34 @@ class Game {
     removePlayer(socketId) {
         const pIdx = this.players.findIndex(p => p.id === socketId);
         if (pIdx === -1) return;
+
+        const player = this.players[pIdx];
+
+        if (this.status === 'playing') {
+            player.connected = false;
+            this.addLog(`🔌 ${player.name} หลุดการเชื่อมต่อ`);
+            return;
+        }
+
+        this.players.splice(pIdx, 1);
+        
+        if (this.players.length === 0) {
+            this.status = 'finished';
+            return;
+        }
+
+        // Reassign host if the host left in lobby
+        if (this.status === 'lobby' && !this.players.find(p => p.isHost) && this.players.length > 0) {
+            this.players[0].isHost = true;
+        }
+    }
+
+    removePlayerByUserId(userId) {
+        const pIdx = this.players.findIndex(p => p.userId === userId);
+        if (pIdx === -1) return;
+
+        const player = this.players[pIdx];
+        this.addLog(`❌ ${player.name} ขาดการเชื่อมต่อนานเกิน 2 นาทีและถูกเตะออกจากเกม`);
 
         this.players.splice(pIdx, 1);
         
@@ -111,7 +141,7 @@ class Game {
                 this.currentTurnIdx--;
             } else if (pIdx === this.currentTurnIdx) {
                 this.currentTurnIdx = this.currentTurnIdx % this.players.length;
-                if (this.players[this.currentTurnIdx].hand.length === 0) {
+                if (this.players.length > 0 && this.players[this.currentTurnIdx].hand.length === 0) {
                     this.currentTurnIdx = (this.currentTurnIdx - 1 + this.players.length) % this.players.length;
                     this._nextTurn();
                 }
@@ -463,6 +493,7 @@ class Game {
     getState(socketId) {
         const maskedPlayers = this.players.map(pl => ({
             id: pl.id,
+            userId: pl.userId,
             name: pl.name,
             avatar: pl.avatar,
             isHost: pl.isHost,
@@ -470,6 +501,7 @@ class Game {
             handSize: pl.hand.length,
             hand: pl.id === socketId ? pl.hand : [],
             brokenTools: pl.brokenTools,
+            connected: pl.connected !== false,
             // Role is revealed only to yourself, or to everyone after game ends
             role: (this.status === 'finished' || pl.id === socketId) ? pl.role : 'hidden',
             isCurrentTurn: this.players.indexOf(pl) === this.currentTurnIdx

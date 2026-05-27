@@ -234,6 +234,19 @@
             <button id="map-reveal-close" class="primary-btn"
                 style="margin-top: 40px; display: none; margin-left: auto; margin-right: auto; padding: 12px 40px;">เข้าใจแล้ว</button>
         </div>
+    <!-- Reconnect Prompt Modal -->
+    <div id="reconnect-prompt-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 400px; width: 90%;">
+            <div style="font-size: 4rem; margin-bottom: 15px;">🔄</div>
+            <h3>พบประวัติการเล่นเดิม!</h3>
+            <p id="reconnect-prompt-subtitle" style="color: var(--text-dim); margin-top: 10px; margin-bottom: 25px; font-size: 0.95rem; line-height: 1.6;">
+                คุณมีเกมที่กำลังเล่นค้างอยู่ ต้องการกลับเข้าเล่นต่อหรือไม่?
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button id="btn-reconnect-yes" class="btn btn-primary" style="justify-content: center; width: 100%;">🚪 กลับเข้าเล่นต่อ</button>
+                <button id="btn-reconnect-no" class="btn btn-outline" style="justify-content: center; width: 100%;">❌ เริ่มเกมใหม่ / ยกเลิก</button>
+            </div>
+        </div>
     </div>
 
 </body>

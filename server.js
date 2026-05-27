@@ -14,6 +14,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Store games. Room code mapped to Game object.
 const games = {};
+// Disconnect timeouts mapped as { [roomCode]: { [userId]: timeoutRef } }
+const disconnectTimeouts = {};
 
 function generateRoomCode() {
     let result = '';
@@ -28,7 +30,7 @@ io.on('connection', (socket) => {
     console.log('Player connected: ' + socket.id);
     let currentRoom = null;
 
-    socket.on('joinRoom', ({ room, name, avatar }) => {
+    socket.on('joinRoom', ({ room, name, avatar, userId }) => {
         room = (room || "").toUpperCase();
         if (!games[room]) {
             if (room.length === 4) {
@@ -40,7 +42,7 @@ io.on('connection', (socket) => {
         }
 
         const game = games[room];
-        const added = game.addPlayer(socket.id, name || 'Guest', avatar);
+        const added = game.addPlayer(socket.id, name || 'Guest', avatar, userId);
         if (added) {
             currentRoom = room;
             socket.join(room);
@@ -128,21 +130,101 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('reconnectPlayer', ({ room, userId }) => {
+        room = (room || "").toUpperCase();
+        if (!games[room]) {
+            socket.emit('errorMsg', "ไม่พบห้องดังกล่าวหรือเกมสิ้นสุดไปแล้ว");
+            return;
+        }
+
+        const game = games[room];
+        const player = game.players.find(p => p.userId === userId);
+
+        if (player) {
+            // Clear reconnection timeout if active
+            if (disconnectTimeouts[room] && disconnectTimeouts[room][userId]) {
+                clearTimeout(disconnectTimeouts[room][userId]);
+                delete disconnectTimeouts[room][userId];
+            }
+
+            // Update player socket association
+            player.id = socket.id;
+            player.connected = true;
+
+            currentRoom = room;
+            socket.join(room);
+
+            socket.emit('joined', room);
+            game.addLog(`⚡ ${player.name} กลับเข้าสู่เกม`);
+
+            game.players.forEach(p => {
+                io.to(p.id).emit('gameState', game.getState(p.id));
+            });
+            console.log(`Player reconnected: ${player.name} (${socket.id}) to room ${room}`);
+        } else {
+            socket.emit('errorMsg', "คุณไม่ได้อยู่ในห้องดังกล่าวแล้ว");
+        }
+    });
+
     socket.on('disconnect', () => {
         console.log('Player disconnected: ' + socket.id);
         if (currentRoom && games[currentRoom]) {
             const game = games[currentRoom];
-            game.removePlayer(socket.id);
-            if (game.players.length === 0) {
-                delete games[currentRoom];
-            } else {
-                // Reassign host if the host left
-                if (!game.players.find(p => p.isHost) && game.players.length > 0) {
-                    game.players[0].isHost = true;
+            const player = game.players.find(p => p.id === socket.id);
+            
+            if (player) {
+                const userId = player.userId;
+                game.removePlayer(socket.id); // Marks offline if playing, removes if lobby
+
+                if (game.status === 'playing') {
+                    // Update state so players see offline indicator
+                    game.players.forEach(p => {
+                        io.to(p.id).emit('gameState', game.getState(p.id));
+                    });
+
+                    // Set 2-minute kick timeout (120,000 ms)
+                    if (!disconnectTimeouts[currentRoom]) disconnectTimeouts[currentRoom] = {};
+                    if (disconnectTimeouts[currentRoom][userId]) {
+                        clearTimeout(disconnectTimeouts[currentRoom][userId]);
+                    }
+
+                    disconnectTimeouts[currentRoom][userId] = setTimeout(() => {
+                        if (games[currentRoom]) {
+                            const g = games[currentRoom];
+                            const pl = g.players.find(p => p.userId === userId);
+                            if (pl && !pl.connected) {
+                                g.removePlayerByUserId(userId);
+                                
+                                // Clean up room if no connected players left
+                                const activePlayers = g.players.filter(p => p.connected);
+                                if (activePlayers.length === 0) {
+                                    delete games[currentRoom];
+                                    delete disconnectTimeouts[currentRoom];
+                                } else {
+                                    // Reassign host if host left
+                                    if (!g.players.find(p => p.isHost) && g.players.length > 0) {
+                                        g.players[0].isHost = true;
+                                    }
+                                    g.players.forEach(p => {
+                                        io.to(p.id).emit('gameState', g.getState(p.id));
+                                    });
+                                }
+                            }
+                        }
+                    }, 120000);
+                } else {
+                    // Lobby phase disconnect
+                    if (game.players.length === 0) {
+                        delete games[currentRoom];
+                    } else {
+                        if (!game.players.find(p => p.isHost) && game.players.length > 0) {
+                            game.players[0].isHost = true;
+                        }
+                        game.players.forEach(p => {
+                            io.to(p.id).emit('gameState', game.getState(p.id));
+                        });
+                    }
                 }
-                game.players.forEach(p => {
-                    io.to(p.id).emit('gameState', game.getState(p.id));
-                });
             }
         }
     });

@@ -6,6 +6,11 @@ let playerName = '';
 let selectedAvatar = '⛏️';
 let roomCode = '';
 let myId = socket.id;
+let userId = localStorage.getItem('saboteur_userId');
+if (!userId) {
+    userId = 'usr_' + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('saboteur_userId', userId);
+}
 let selectedCardId = null;
 let cardRotated = false;
 let _lastStatus = null;
@@ -68,14 +73,14 @@ const AVATAR_LIST = ['⛏️', '🧔', '🧙‍♂️', '👨‍🔧', '👩‍�
 // ─── Initialization ───────────────────────────────────────────────────────────
 document.getElementById('btn-create').addEventListener('click', () => {
     playerName = document.getElementById('input-name').value.trim() || `Dwarf${Math.floor(Math.random() * 1000)}`;
-    socket.emit('joinRoom', { room: '', name: playerName, avatar: selectedAvatar });
+    socket.emit('joinRoom', { room: '', name: playerName, avatar: selectedAvatar, userId });
 });
 
 document.getElementById('btn-join').addEventListener('click', () => {
     playerName = document.getElementById('input-name').value.trim() || `Dwarf${Math.floor(Math.random() * 1000)}`;
     roomCode = document.getElementById('input-code').value.trim();
     if (!roomCode) { showToast('กรุณากรอกรหัสห้อง'); return; }
-    socket.emit('joinRoom', { room: roomCode, name: playerName, avatar: selectedAvatar });
+    socket.emit('joinRoom', { room: roomCode, name: playerName, avatar: selectedAvatar, userId });
 });
 
 document.getElementById('btn-start').addEventListener('click', () => socket.emit('startGame'));
@@ -87,6 +92,7 @@ socket.on('connect', () => { myId = socket.id; });
 socket.on('joined', (room) => {
     roomCode = room;
     document.getElementById('lob-code').innerText = room;
+    localStorage.setItem('saboteur_session', JSON.stringify({ roomCode: room, userId, playerName, avatar: selectedAvatar }));
     switchScreen('lobby');
 });
 
@@ -174,6 +180,7 @@ function render() {
         if (gameState.status === 'finished') {
             renderGameOver();
             document.getElementById('game-over-modal').classList.remove('hidden');
+            localStorage.removeItem('saboteur_session');
         }
     }
     _lastStatus = gameState.status;
@@ -317,17 +324,24 @@ function renderSidebar() {
     gameState.players.forEach((p, idx) => {
         const li = document.createElement('li');
         li.className = 'player-item';
-        if (idx === gameState.currentTurnIdx) li.classList.add('current-turn');
-        if (p.id === myId) li.classList.add('is-me');
+        if (idx === gameState.currentTurnIdx) li.className += ' current-turn';
+        if (p.id === myId) li.className += ' is-me';
+
+        if (!p.connected) {
+            li.style.opacity = '0.5';
+            li.style.border = '1px dashed rgba(229, 57, 53, 0.4)';
+        }
 
         const toolHtml = ['pickaxe', 'lantern', 'cart'].map(t => `
             <span class="material-symbols-rounded mini-tool ${p.brokenTools[t] ? 'broken' : 'fine'}" title="${t}">${TOOL_ICON[t]}</span>
         `).join('');
 
+        const offlineLabel = p.connected ? '' : ' <span style="color:var(--danger); font-size:0.75rem; font-weight:bold;">(🔴 Offline)</span>';
+
         li.innerHTML = `
             <div style="display:flex;align-items:center;gap:10px;">
                 <span class="player-avatar" style="width:32px;height:32px;font-size:1.2rem;border:1px solid rgba(255,255,255,0.1);">${p.avatar || '🧔'}</span>
-                <span class="player-name">${p.name}${p.id === myId ? ' (คุณ)' : ''} [${p.handSize}]</span>
+                <span class="player-name" style="${!p.connected ? 'color: #888;' : ''}">${p.name}${p.id === myId ? ' (คุณ)' : ''}${offlineLabel} [${p.handSize}]</span>
             </div>
             <div class="player-tools">${toolHtml}</div>
         `;
@@ -1017,3 +1031,34 @@ function playAnimation(animData) {
         }
     });
 }
+// ─── Reconnection check on startup ───────────────────────────────────────────
+(function checkSavedSession() {
+    const saved = localStorage.getItem('saboteur_session');
+    if (saved) {
+        try {
+            const session = JSON.parse(saved);
+            if (session && session.roomCode && session.userId) {
+                const modal = document.getElementById('reconnect-prompt-modal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    
+                    document.getElementById('btn-reconnect-yes').onclick = () => {
+                        modal.classList.add('hidden');
+                        playerName = session.playerName;
+                        selectedAvatar = session.avatar;
+                        roomCode = session.roomCode;
+                        socket.emit('reconnectPlayer', { room: session.roomCode, userId: session.userId });
+                    };
+                    
+                    document.getElementById('btn-reconnect-no').onclick = () => {
+                        modal.classList.add('hidden');
+                        localStorage.removeItem('saboteur_session');
+                    };
+                }
+            }
+        } catch (e) {
+            console.error('Failed to parse saved session:', e);
+            localStorage.removeItem('saboteur_session');
+        }
+    }
+})();
