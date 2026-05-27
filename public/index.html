@@ -161,18 +161,36 @@
 
             <!-- Game Over Modal -->
             <div id="game-over-modal" class="modal hidden">
-                <div class="modal-content game-over-content">
-                    <div class="game-over-banner" id="game-over-banner">
-                        <div class="game-over-icon" id="game-over-icon"></div>
-                        <h2 id="winner-text">Miners Win!</h2>
-                        <p id="winner-reason" class="winner-reason"></p>
+                <div class="modal-content game-over-content" style="max-width: 500px; width: 95%; max-height: 95vh; overflow-y: auto; padding: 30px;">
+                    <div class="game-over-banner" id="game-over-banner" style="padding: 20px; margin-bottom: 20px;">
+                        <div class="game-over-icon" id="game-over-icon" style="font-size: 3rem; margin-bottom: 10px;"></div>
+                        <h2 id="winner-text" style="font-size: 1.8rem; margin: 0;">Miners Win!</h2>
+                        <p id="winner-reason" class="winner-reason" style="margin-top: 5px; font-size: 0.95rem;"></p>
                     </div>
-                    <div class="game-over-roles">
-                        <h3>บทบาทของทุกคน</h3>
+
+                    <!-- Round Gold Distribution -->
+                    <div id="round-gold-summary" style="margin-top: 15px; margin-bottom: 20px; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+                        <h3 style="font-size: 0.95rem; color: var(--gold); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px;">💰 ทองที่ได้รับรอบนี้</h3>
+                        <div id="round-gold-list" style="display: flex; flex-direction: column; gap: 6px; font-size: 0.95rem;"></div>
+                    </div>
+
+                    <!-- Overall Leaderboard -->
+                    <div id="overall-standings-section" style="margin-top: 15px; margin-bottom: 20px; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+                        <h3 style="font-size: 0.95rem; color: var(--gold); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px;">📊 คะแนนสะสมทองทั้งหมด (3 รอบ)</h3>
+                        <div id="standings-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                    </div>
+
+                    <div class="game-over-roles" style="margin-top: 20px; text-align: left;">
+                        <h3 style="font-size: 0.95rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px;">🎭 บทบาทในรอบนี้</h3>
                         <div id="roles-reveal-grid" class="roles-grid"></div>
                     </div>
-                    <button onclick="location.reload()" class="primary-btn"
-                        style="margin-top: 20px;">เล่นอีกครั้ง</button>
+
+                    <!-- Transition Actions -->
+                    <div id="modal-actions" style="margin-top: 30px; display: flex; flex-direction: column; gap: 10px; width: 100%;">
+                        <button id="btn-next-round" class="btn btn-primary hidden" style="justify-content: center; width: 100%;">🎮 เริ่มรอบถัดไป</button>
+                        <button id="btn-to-lobby" class="btn btn-outline hidden" style="justify-content: center; width: 100%; border-color: rgba(251, 192, 45, 0.4); color: var(--gold);">🚪 กลับไปยังล็อบบี้เดิม</button>
+                        <div id="non-host-wait-msg" style="color: var(--text-dim); text-align: center; font-size: 0.9rem; font-style: italic; margin-top: 5px;" class="hidden">รอโฮสต์เริ่มรอบถัดไป...</div>
+                    </div>
                 </div>
             </div>
         </div>

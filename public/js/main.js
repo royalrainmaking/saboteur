@@ -294,16 +294,18 @@ function renderTopBar() {
     const currPlayer = gameState.players[gameState.currentTurnIdx];
     if (!currPlayer) return;
 
+    const roundPrefix = `[รอบที่ ${gameState.round}/3] `;
+
     if (currPlayer.id === myId) {
         if (!_wasMyTurn) {
             playTurnSound();
         }
         _wasMyTurn = true;
-        turnEl.innerText = '🕐 ถึงเวลาของคุณแล้ว!';
+        turnEl.innerText = roundPrefix + '🕐 ถึงเวลาของคุณแล้ว!';
         turnEl.classList.add('my-turn');
     } else {
         _wasMyTurn = false;
-        turnEl.innerText = `⏳ รอ ${currPlayer.name}...`;
+        turnEl.innerText = roundPrefix + `⏳ รอ ${currPlayer.name}...`;
         turnEl.classList.remove('my-turn');
     }
     document.getElementById('deck-size').innerText = gameState.deckSize;
@@ -818,22 +820,60 @@ function renderGameOver() {
     const reasonEl = document.getElementById('winner-reason');
     const grid = document.getElementById('roles-reveal-grid');
 
+    banner.style.background = 'linear-gradient(135deg, rgba(30, 20, 15, 0.9), rgba(15, 10, 5, 0.9))';
+    banner.style.borderColor = 'var(--gold)';
+
     if (winner === 'miners') {
-        banner.style.background = 'linear-gradient(135deg,rgba(67,160,71,0.15),rgba(67,160,71,0.05))';
-        banner.style.borderColor = '#43a047';
         iconEl.innerText = '🏆';
-        titleEl.innerText = 'นักขุดชนะ!';
+        titleEl.innerText = `จบการแข่งรอบที่ ${gameState.round} (นักขุดชนะ)`;
         titleEl.style.color = '#43a047';
-        reasonEl.innerText = 'เส้นทางถูกเชื่อมไปถึงขุมทองสำเร็จ!';
+        reasonEl.innerText = 'เส้นทางถูกเชื่อมไปถึงขุมทองคำสำเร็จ!';
     } else {
-        banner.style.background = 'linear-gradient(135deg,rgba(229,57,53,0.15),rgba(229,57,53,0.05))';
-        banner.style.borderColor = '#e53935';
         iconEl.innerText = '💀';
-        titleEl.innerText = 'คนทรยศชนะ!';
+        titleEl.innerText = `จบการแข่งรอบที่ ${gameState.round} (คนทรยศชนะ)`;
         titleEl.style.color = '#e53935';
-        reasonEl.innerText = 'การ์ดหมดทุกใบแล้ว ยังไม่มีใครเจอขุมทอง!';
+        reasonEl.innerText = 'การ์ดหมดมือทุกคนแล้ว ยังขุดไปไม่ถึงขุมทอง!';
     }
 
+    // 1. Render round gold distribution
+    const goldListEl = document.getElementById('round-gold-list');
+    goldListEl.innerHTML = '';
+    gameState.players.forEach(p => {
+        const goldVal = (gameState.roundGoldDistribution && gameState.roundGoldDistribution[p.id]) || 0;
+        const roleIcon = p.role === 'miner' ? '⛏️' : '💣';
+        const row = document.createElement('div');
+        row.style.cssText = 'display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.02);';
+        row.innerHTML = `
+            <span>${p.avatar || '🧔'} <b>${p.name}</b> (${roleIcon} ${p.role === 'miner' ? 'นักขุด' : 'คนทรยศ'})${p.id === myId ? ' (คุณ)' : ''}</span>
+            <span style="color: var(--gold); font-weight: bold;">+${goldVal} ก้อน</span>
+        `;
+        goldListEl.appendChild(row);
+    });
+
+    // 2. Render overall cumulative standings
+    const standingsListEl = document.getElementById('standings-list');
+    standingsListEl.innerHTML = '';
+    const sorted = [...gameState.players].sort((a, b) => b.goldTotal - a.goldTotal);
+    sorted.forEach((p, rank) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 6px; margin-bottom: 4px;';
+        
+        let rankBadge = rank === 0 ? '👑' : rank === 1 ? '🥈' : rank === 2 ? '🥉' : `${rank + 1}.`;
+        
+        if (rank === 0 && gameState.round === 3) {
+            row.style.background = 'rgba(251, 192, 45, 0.15)';
+            row.style.border = '1px solid var(--gold)';
+            p.name = '🏆 ' + p.name; // Tag grand champion
+        }
+
+        row.innerHTML = `
+            <span>${rankBadge} ${p.avatar || '🧔'} <b>${p.name}</b>${p.id === myId ? ' (คุณ)' : ''}</span>
+            <span style="color: var(--gold); font-weight: 800; font-size: 1.05rem;">${p.goldTotal} ก้อน</span>
+        `;
+        standingsListEl.appendChild(row);
+    });
+
+    // 3. Render roles this round
     grid.innerHTML = '';
     for (const p of gameState.players) {
         const isMiner = p.role === 'miner';
@@ -841,10 +881,45 @@ function renderGameOver() {
         card.className = `role-reveal-card-mini ${isMiner ? 'miner' : 'saboteur'}`;
         card.innerHTML = `
             <span class="rmini-avatar">${p.avatar || '🧔'}</span>
-            <span class="rmini-name">${p.name}${p.id === myId ? ' (คุณ)' : ''}</span>
+            <span class="rmini-name">${p.name.replace('🏆 ', '')}${p.id === myId ? ' (คุณ)' : ''}</span>
             <span class="rmini-role">${isMiner ? '⛏️ นักขุด' : '💀 คนทรยศ'}</span>
         `;
         grid.appendChild(card);
+    }
+
+    // 4. Configure action button controls
+    const nextBtn = document.getElementById('btn-next-round');
+    const lobbyBtn = document.getElementById('btn-to-lobby');
+    const waitMsg = document.getElementById('non-host-wait-msg');
+
+    nextBtn.classList.add('hidden');
+    lobbyBtn.classList.add('hidden');
+    waitMsg.classList.add('hidden');
+
+    const isMeHost = gameState.me && gameState.me.isHost;
+
+    if (gameState.round < 3) {
+        if (isMeHost) {
+            nextBtn.classList.remove('hidden');
+            nextBtn.onclick = () => {
+                nextBtn.disabled = true;
+                socket.emit('startNextRound');
+            };
+        } else {
+            waitMsg.classList.remove('hidden');
+            waitMsg.innerText = '⏳ รอผู้สร้างห้องเริ่มการแข่งรอบถัดไป...';
+        }
+    } else {
+        if (isMeHost) {
+            lobbyBtn.classList.remove('hidden');
+            lobbyBtn.onclick = () => {
+                lobbyBtn.disabled = true;
+                socket.emit('returnToLobby');
+            };
+        } else {
+            waitMsg.classList.remove('hidden');
+            waitMsg.innerText = '🏁 จบการแข่งขัน 3 รอบ! รอโฮสต์นำทุกคนกลับล็อบบี้เดิม...';
+        }
     }
 }
 

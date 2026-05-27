@@ -45,7 +45,19 @@ const DECK_COMPOSITION = {
 };
 
 // Saboteur counts by player count (official rules)
+// Saboteur counts by player count (official rules)
 const SABOTEUR_COUNTS = { 3: 1, 4: 1, 5: 2, 6: 2, 7: 3, 8: 3, 9: 3, 10: 4 };
+
+const ROLE_POOLS = {
+    3: { saboteurs: 1, miners: 3 }, // 4 cards, deal 3
+    4: { saboteurs: 1, miners: 4 }, // 5 cards, deal 4
+    5: { saboteurs: 2, miners: 4 }, // 6 cards, deal 5
+    6: { saboteurs: 2, miners: 5 }, // 7 cards, deal 6
+    7: { saboteurs: 3, miners: 5 }, // 8 cards, deal 7
+    8: { saboteurs: 3, miners: 6 }, // 9 cards, deal 8
+    9: { saboteurs: 3, miners: 7 }, // 10 cards, deal 9
+    10: { saboteurs: 4, miners: 7 } // 11 cards, deal 10
+};
 
 // Neighbor directions: [dx, dy, exitOut, exitIn]
 const DIRS = [
@@ -67,6 +79,27 @@ class Game {
         this.messages = [];
         this.lastDiscard = null;
         this._warnedDeckEmpty = false;
+        
+        // Multi-round state
+        this.round = 1;
+        this.roundWinnerId = null;
+        this.roundGoldDrawn = [];
+        this.roundGoldDistribution = {};
+        this.goldDeck = [];
+        this._initGoldDeck();
+    }
+
+    _initGoldDeck() {
+        this.goldDeck = [
+            3, 3, 3, 3, 3, 3, 3, 3, 
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+        ];
+        // Fisher-Yates Shuffle
+        for (let i = this.goldDeck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.goldDeck[i], this.goldDeck[j]] = [this.goldDeck[j], this.goldDeck[i]];
+        }
     }
 
     // ─── Lobby ────────────────────────────────────────────────────────────────
@@ -85,7 +118,9 @@ class Game {
             role: null,
             hand: [],
             brokenTools: { pickaxe: false, lantern: false, cart: false },
-            connected: true
+            connected: true,
+            goldHistory: [],
+            goldTotal: 0
         });
         return true;
     }
@@ -169,17 +204,18 @@ class Game {
     }
 
     _assignRoles() {
-        const sCount = SABOTEUR_COUNTS[this.players.length] ?? 1;
-        const roles = [
-            ...Array(sCount).fill('saboteur'),
-            ...Array(this.players.length - sCount).fill('miner')
+        const poolCfg = ROLE_POOLS[this.players.length] || { saboteurs: 1, miners: this.players.length };
+        const pool = [
+            ...Array(poolCfg.saboteurs).fill('saboteur'),
+            ...Array(poolCfg.miners).fill('miner')
         ];
         // Fisher-Yates shuffle
-        for (let i = roles.length - 1; i > 0; i--) {
+        for (let i = pool.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [roles[i], roles[j]] = [roles[j], roles[i]];
+            [pool[i], pool[j]] = [pool[j], pool[i]];
         }
-        this.players.forEach((p, i) => p.role = roles[i]);
+        // Deal roles to players (leaving 1 card face down)
+        this.players.forEach((p, i) => p.role = pool[i]);
     }
 
     _buildDeck() {
@@ -408,10 +444,14 @@ class Game {
                         this.addLog(`⭐ เจอขุมทอง! นักขุดชนะ!`);
                         this.status = 'finished';
                         this.winner = 'miners';
+                        this.roundWinnerId = player.id;
+                        this._distributeGold('miners', player.id);
                     } else {
                         this.addLog(`🪨 นักขุดประมาท! ขุดไปเจอถ่านหิน ถ้ำถล่มปิดตาย คนทรยศชนะ!`);
                         this.status = 'finished';
                         this.winner = 'saboteurs';
+                        this.roundWinnerId = player.id;
+                        this._distributeGold('saboteurs', player.id);
                     }
                 }
             }
@@ -454,6 +494,8 @@ class Game {
         if (this.deck.length === 0 && this.players.every(p => p.hand.length === 0)) {
             this.status = 'finished';
             this.winner = 'saboteurs';
+            this.roundWinnerId = null;
+            this._distributeGold('saboteurs', null);
             this.addLog('💀 การ์ดหมดทุกใบแล้ว! คนทรยศชนะ!');
             return true;
         }
@@ -502,6 +544,8 @@ class Game {
             hand: pl.id === socketId ? pl.hand : [],
             brokenTools: pl.brokenTools,
             connected: pl.connected !== false,
+            goldHistory: pl.goldHistory || [],
+            goldTotal: pl.goldTotal || 0,
             // Role is revealed only to yourself, or to everyone after game ends
             role: (this.status === 'finished' || pl.id === socketId) ? pl.role : 'hidden',
             isCurrentTurn: this.players.indexOf(pl) === this.currentTurnIdx
@@ -510,6 +554,9 @@ class Game {
         return {
             id: this.id,
             status: this.status,
+            round: this.round,
+            roundGoldDrawn: this.roundGoldDrawn,
+            roundGoldDistribution: this.roundGoldDistribution,
             me: maskedPlayers.find(m => m.id === socketId) ?? null,
             players: maskedPlayers,
             board: this.board,
@@ -521,5 +568,128 @@ class Game {
         };
     }
 }
+
+_distributeGold(winnerSide, winningPlayerId) {
+        this.roundGoldDrawn = [];
+        this.roundGoldDistribution = {};
+        
+        this.players.forEach(p => {
+            this.roundGoldDistribution[p.id] = 0;
+        });
+
+        if (winnerSide === 'miners') {
+            const miners = this.players.filter(p => p.role === 'miner');
+            const saboteurs = this.players.filter(p => p.role === 'saboteur');
+
+            let cardsToDraw = miners.length;
+            if (saboteurs.length === 0) {
+                cardsToDraw = Math.max(0, miners.length - 1);
+            }
+
+            const drawnGold = [];
+            for (let i = 0; i < cardsToDraw; i++) {
+                if (this.goldDeck.length === 0) this._initGoldDeck();
+                drawnGold.push(this.goldDeck.pop() || 1);
+            }
+
+            this.roundGoldDrawn = [...drawnGold];
+            drawnGold.sort((a, b) => b - a);
+
+            let winnerIdx = this.players.findIndex(p => p.id === winningPlayerId);
+            if (winnerIdx === -1) winnerIdx = this.currentTurnIdx;
+
+            let goldIdx = 0;
+            const n = this.players.length;
+            for (let i = 0; i < n; i++) {
+                const p = this.players[(winnerIdx + i) % n];
+                if (p.role === 'miner') {
+                    const goldVal = drawnGold[goldIdx] !== undefined ? drawnGold[goldIdx] : 0;
+                    this.roundGoldDistribution[p.id] = goldVal;
+                    p.goldHistory.push(goldVal);
+                    p.goldTotal += goldVal;
+                    goldIdx++;
+                } else {
+                    p.goldHistory.push(0);
+                }
+            }
+            this.addLog(`💰 คนขุดทองชนะรอบนี้! จั่วการ์ดรูปทอง ${cardsToDraw} ใบและผลัดกันเลือก!`);
+
+        } else if (winnerSide === 'saboteurs') {
+            const saboteurs = this.players.filter(p => p.role === 'saboteur');
+            const numSaboteurs = saboteurs.length;
+
+            let goldValPerSaboteur = 0;
+            if (numSaboteurs === 1) goldValPerSaboteur = 4;
+            else if (numSaboteurs === 2 || numSaboteurs === 3) goldValPerSaboteur = 3;
+            else if (numSaboteurs >= 4) goldValPerSaboteur = 2;
+
+            this.players.forEach(p => {
+                if (p.role === 'saboteur') {
+                    this.roundGoldDistribution[p.id] = goldValPerSaboteur;
+                    p.goldHistory.push(goldValPerSaboteur);
+                    p.goldTotal += goldValPerSaboteur;
+                } else {
+                    p.goldHistory.push(0);
+                }
+            });
+            this.addLog(`💰 คนทรยศชนะรอบนี้! ได้รับทองคนละ ${goldValPerSaboteur} ก้อน!`);
+        }
+    }
+
+    startNextRound() {
+        if (this.status !== 'finished' || this.round >= 3) return false;
+
+        this.round++;
+        this.status = 'playing';
+        this.winner = null;
+        this.roundWinnerId = null;
+        this.roundGoldDrawn = [];
+        this.roundGoldDistribution = {};
+        this.lastDiscard = null;
+        this._warnedDeckEmpty = false;
+        this.board = {};
+        this.deck = [];
+
+        this.players.forEach(p => {
+            p.hand = [];
+            p.brokenTools = { pickaxe: false, lantern: false, cart: false };
+            p.role = null;
+            p.isReady = false;
+        });
+
+        this._assignRoles();
+        this._buildDeck();
+        this._dealHands();
+        this._initBoard();
+        this.currentTurnIdx = Math.floor(Math.random() * this.players.length);
+        this.addLog(`🎮 เริ่มการแข่งรอบที่ ${this.round}/3! ถึงคิวของ ${this.players[this.currentTurnIdx].name}`);
+        return true;
+    }
+
+    returnToLobby() {
+        this.round = 1;
+        this.status = 'lobby';
+        this.winner = null;
+        this.roundWinnerId = null;
+        this.roundGoldDrawn = [];
+        this.roundGoldDistribution = {};
+        this.lastDiscard = null;
+        this._warnedDeckEmpty = false;
+        this.board = {};
+        this.deck = [];
+
+        this.players.forEach((p, idx) => {
+            p.hand = [];
+            p.brokenTools = { pickaxe: false, lantern: false, cart: false };
+            p.role = null;
+            p.isReady = false;
+            p.isHost = idx === 0;
+            p.goldHistory = [];
+            p.goldTotal = 0;
+        });
+
+        this.addLog(`🚪 สิ้นสุดเกมแมตช์ใหญ่! ผู้เล่นทั้งหมดกลับเข้าสู่ล็อบบี้หลักเรียบร้อย`);
+        return true;
+    }
 
 module.exports = { Game };

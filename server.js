@@ -213,6 +213,42 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('startNextRound', () => {
+        if (!currentRoom || !games[currentRoom]) return;
+        const game = games[currentRoom];
+        const me = game.players.find(p => p.id === socket.id);
+        
+        if (me && me.isHost && game.status === 'finished' && game.round < 3) {
+            if (game.startNextRound()) {
+                // Emit new role reveals for the new round
+                game.players.forEach(p => {
+                    io.to(p.id).emit('roleReveal', { role: p.role, avatar: p.avatar });
+                });
+                
+                // Delay 2.5s and emit new gamestate
+                setTimeout(() => {
+                    game.players.forEach(p => {
+                        io.to(p.id).emit('gameState', game.getState(p.id));
+                    });
+                }, 2500);
+            }
+        }
+    });
+
+    socket.on('returnToLobby', () => {
+        if (!currentRoom || !games[currentRoom]) return;
+        const game = games[currentRoom];
+        const me = game.players.find(p => p.id === socket.id);
+        
+        if (me && me.isHost && game.status === 'finished') {
+            if (game.returnToLobby()) {
+                game.players.forEach(p => {
+                    io.to(p.id).emit('gameState', game.getState(p.id));
+                });
+            }
+        }
+    });
+
     socket.on('disconnect', () => {
         console.log('Player disconnected: ' + socket.id);
         if (currentRoom && games[currentRoom]) {
