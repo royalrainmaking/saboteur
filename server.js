@@ -94,6 +94,10 @@ io.on('connection', (socket) => {
         if (res.error) {
             socket.emit('errorMsg', res.error);
         } else {
+            // Broadcast animation event first if actionDetails present
+            if (res.actionDetails) {
+                io.to(currentRoom).emit('actionAnimation', res.actionDetails);
+            }
             // Update everyone
             game.players.forEach(p => {
                 io.to(p.id).emit('gameState', game.getState(p.id));
@@ -115,6 +119,9 @@ io.on('connection', (socket) => {
         if (res.error) {
             socket.emit('errorMsg', res.error);
         } else {
+            if (res.actionDetails) {
+                io.to(currentRoom).emit('actionAnimation', res.actionDetails);
+            }
             game.players.forEach(p => {
                 io.to(p.id).emit('gameState', game.getState(p.id));
             });

@@ -137,12 +137,23 @@
                 </div>
 
                 <!-- Right Sidebar (Global) -->
-                <div class="sidebar right-sidebar">
-                    <div class="panel players-panel">
+                <div class="sidebar right-sidebar" style="display: flex; flex-direction: column; gap: 10px;">
+                    <div class="panel players-panel" style="flex: 1; overflow-y: auto;">
                         <h3>ผู้เล่นทั้งหมด</h3>
                         <ul id="game-players-list">
                             <!-- Player list with broken tools status -->
                         </ul>
+                    </div>
+                    <div class="panel discard-panel" id="discard-panel" style="display: none; padding-bottom: 10px; flex: 0 0 auto;">
+                        <h3 style="margin-bottom: 5px;">ทิ้งล่าสุด</h3>
+                        <div id="last-discard-info" style="font-size: 0.8rem; color: #ccc; margin-bottom: 5px; text-align: center;"></div>
+                        <div style="display: flex; justify-content: center;">
+                            <div id="last-discard-card" class="hand-card" style="position: relative; transform: scale(0.8); pointer-events: none; margin: 0; margin-bottom: -10px;"></div>
+                        </div>
+                    </div>
+                    <div class="panel logs-panel" style="flex: 0 0 150px; display: flex; flex-direction: column;">
+                        <h3 style="margin-bottom: 5px;">เหตุการณ์</h3>
+                        <div id="game-logs" style="flex: 1; overflow-y: auto; font-size: 0.75rem; padding: 5px; background: rgba(0,0,0,0.3); border-radius: 4px; display: flex; flex-direction: column; gap: 4px; color: #ddd;"></div>
                     </div>
                 </div>
             </div>

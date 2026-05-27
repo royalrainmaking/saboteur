@@ -9,6 +9,9 @@ let myId = socket.id;
 let selectedCardId = null;
 let cardRotated = false;
 let _lastStatus = null;
+let _wasMyTurn = false;
+let isAnimating = false;
+let pendingGameState = null;
 
 // ─── DOM Cache ────────────────────────────────────────────────────────────────
 const screens = {
@@ -88,8 +91,24 @@ socket.on('joined', (room) => {
 });
 
 socket.on('gameState', (state) => {
-    gameState = state;
-    render();
+    if (isAnimating) {
+        pendingGameState = state;
+    } else {
+        gameState = state;
+        render();
+    }
+});
+
+socket.on('actionAnimation', (animData) => {
+    isAnimating = true;
+    playAnimation(animData).then(() => {
+        isAnimating = false;
+        if (pendingGameState) {
+            gameState = pendingGameState;
+            pendingGameState = null;
+            render();
+        }
+    });
 });
 
 socket.on('errorMsg', (msg) => showToast(msg));
@@ -223,7 +242,25 @@ function renderGame() {
     renderBoard();
     renderHand();
     renderLogs();
+    renderLastDiscard();
     renderRoleCorner();
+}
+
+function playTurnSound() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.5);
+    } catch(e) { console.error(e); }
 }
 
 function renderTopBar() {
@@ -232,9 +269,14 @@ function renderTopBar() {
     if (!currPlayer) return;
 
     if (currPlayer.id === myId) {
+        if (!_wasMyTurn) {
+            playTurnSound();
+        }
+        _wasMyTurn = true;
         turnEl.innerText = '🕐 ถึงเวลาของคุณแล้ว!';
         turnEl.classList.add('my-turn');
     } else {
+        _wasMyTurn = false;
         turnEl.innerText = `⏳ รอ ${currPlayer.name}...`;
         turnEl.classList.remove('my-turn');
     }
@@ -773,10 +815,205 @@ function renderGameOver() {
     }
 }
 
-// ─── Logs ─────────────────────────────────────────────────────────────────────
+// ─── Logs & Last Discard ───────────────────────────────────────────────────────
 function renderLogs() {
-    // Log panel has been removed per user request
+    const logsEl = document.getElementById('game-logs');
+    if (!logsEl || !gameState.messages) return;
+    
+    // Check if we are scrolled to the bottom before rendering
+    const isScrolledToBottom = logsEl.scrollHeight - logsEl.clientHeight <= logsEl.scrollTop + 10;
+    
+    logsEl.innerHTML = '';
+    gameState.messages.forEach(m => {
+        const d = document.createElement('div');
+        const timeStr = new Date(m.time).toLocaleTimeString('th-TH', { hour: '2-digit', minute:'2-digit', second:'2-digit' });
+        d.innerHTML = `<span style="color:#888;">[${timeStr}]</span> ${m.text}`;
+        logsEl.appendChild(d);
+    });
+    
+    // Auto-scroll to bottom
+    logsEl.scrollTop = logsEl.scrollHeight;
+}
+
+function renderLastDiscard() {
+    const panel = document.getElementById('discard-panel');
+    const info = document.getElementById('last-discard-info');
+    const cardEl = document.getElementById('last-discard-card');
+    
+    if (!gameState.lastDiscard || !gameState.lastDiscard.card) {
+        panel.style.display = 'none';
+        return;
+    }
+    
+    panel.style.display = 'block';
+    info.innerText = `โดย ${gameState.lastDiscard.playerName}`;
+    
+    const card = gameState.lastDiscard.card;
+    cardEl.className = `hand-card${card.type === 'action' ? ' action-card' : ''}${card.deadEnd ? ' dead-end' : ''}`;
+    cardEl.innerHTML = generateCardHTML(card);
 }
 
 // ─── Resize ───────────────────────────────────────────────────────────────────
-window.addEventListener('resize', () => { if (gameState && gameState.status !== 'lobby') renderBoard(); });
+}
+
+// ─── Animations ───────────────────────────────────────────────────────────────
+function playAnimation(animData) {
+    return new Promise((resolve) => {
+        const { type, player, card, opts } = animData;
+        const ghost = document.createElement('div');
+        ghost.className = `ghost-card ${card.type === 'action' ? 'action-card' : ''} ${card.deadEnd ? 'dead-end' : ''}`;
+        ghost.innerHTML = generateCardHTML(card, opts && opts.rotated);
+        document.body.appendChild(ghost);
+
+        const cx = window.innerWidth / 2;
+        const cy = window.innerHeight / 2;
+
+        if (type === 'discard') {
+            // Start at bottom center (where hand usually is)
+            ghost.style.left = `${cx}px`;
+            ghost.style.top = `${window.innerHeight}px`;
+            ghost.style.transform = `translate(-50%, -50%) scale(0.5)`;
+            
+            // Force reflow
+            void ghost.offsetWidth;
+
+            // Fly to center, spin and shrink to trash
+            ghost.style.transition = 'all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            ghost.style.left = `${cx}px`;
+            ghost.style.top = `${cy}px`;
+            ghost.style.transform = `translate(-50%, -50%) scale(1.5) rotate(720deg)`;
+            ghost.style.opacity = '0';
+            
+            setTimeout(() => {
+                ghost.remove();
+                resolve();
+            }, 1000);
+        } else if (type === 'playPath' || type === 'playAction') {
+            // Start at bottom center
+            ghost.style.left = `${cx}px`;
+            ghost.style.top = `${window.innerHeight}px`;
+            ghost.style.transform = `translate(-50%, -50%) scale(0.5)`;
+            
+            void ghost.offsetWidth;
+
+            // Phase 1: Fly to center
+            ghost.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            ghost.style.left = `${cx}px`;
+            ghost.style.top = `${cy}px`;
+            ghost.style.transform = `translate(-50%, -50%) scale(1.5)`;
+
+            setTimeout(() => {
+                // Phase 2: Fly to target
+                if (type === 'playPath' || (opts && opts.x !== undefined)) {
+                    // Calculate board target position
+                    const boardEl = document.getElementById('board');
+                    let scale = 1;
+                    if (boardEl && boardEl.style.transform) {
+                        const match = boardEl.style.transform.match(/scale\(([^)]+)\)/);
+                        if (match) scale = parseFloat(match[1]);
+                    }
+                    const bRect = boardEl ? boardEl.getBoundingClientRect() : { left: cx, top: cy };
+
+                    // Find minX, minY to offset correctly
+                    let minX = 0, minY = -2;
+                    if (gameState && gameState.board) {
+                        for (const key in gameState.board) {
+                            const [bx, by] = key.split(',').map(Number);
+                            if (bx < minX) minX = bx;
+                            if (by < minY) minY = by;
+                        }
+                    }
+                    const PAD = 1.5;
+                    const pMinX = minX - PAD;
+                    const pMinY = minY - PAD;
+                    const CELL_W = 90;
+                    const CELL_H = 120;
+                    
+                    const targetLeft = (opts.x - pMinX) * CELL_W + CELL_W/2;
+                    const targetTop = (opts.y - pMinY) * CELL_H + CELL_H/2;
+
+                    const screenX = bRect.left + (targetLeft * scale);
+                    const screenY = bRect.top + (targetTop * scale);
+
+                    ghost.style.transition = 'all 0.5s ease-in';
+                    ghost.style.left = `${screenX}px`;
+                    ghost.style.top = `${screenY}px`;
+                    ghost.style.transform = `translate(-50%, -50%) scale(${scale})`;
+                    ghost.style.opacity = '0';
+                } else {
+                    // Fly to target player in sidebar (approximate right)
+                    ghost.style.transition = 'all 0.5s ease-in';
+                    ghost.style.left = `calc(100vw - 150px)`;
+                    ghost.style.top = `${cy}px`;
+                    ghost.style.transform = `translate(-50%, -50%) scale(0.5)`;
+                    ghost.style.opacity = '0';
+                }
+                
+                setTimeout(() => {
+                    ghost.remove();
+                    resolve();
+                }, 500);
+            }, 700);
+        } else if (type === 'mapReveal') {
+            // Start at target on board
+            const boardEl = document.getElementById('board');
+            let scale = 1;
+            if (boardEl && boardEl.style.transform) {
+                const match = boardEl.style.transform.match(/scale\(([^)]+)\)/);
+                if (match) scale = parseFloat(match[1]);
+            }
+            const bRect = boardEl ? boardEl.getBoundingClientRect() : { left: cx, top: cy };
+            
+            let minX = 0, minY = -2;
+            if (gameState && gameState.board) {
+                for (const key in gameState.board) {
+                    const [bx, by] = key.split(',').map(Number);
+                    if (bx < minX) minX = bx;
+                    if (by < minY) minY = by;
+                }
+            }
+            const PAD = 1.5;
+            const pMinX = minX - PAD;
+            const pMinY = minY - PAD;
+            const CELL_W = 90;
+            const CELL_H = 120;
+            
+            const targetLeft = (opts.x - pMinX) * CELL_W + CELL_W/2;
+            const targetTop = (opts.y - pMinY) * CELL_H + CELL_H/2;
+
+            const screenX = bRect.left + (targetLeft * scale);
+            const screenY = bRect.top + (targetTop * scale);
+
+            ghost.className = 'ghost-card goal-card face-down';
+            ghost.innerHTML = '';
+            
+            ghost.style.left = `${screenX}px`;
+            ghost.style.top = `${screenY}px`;
+            ghost.style.transform = `translate(-50%, -50%) scale(${scale})`;
+
+            void ghost.offsetWidth;
+
+            // Fly to center and spin
+            ghost.style.transition = 'all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            ghost.style.left = `${cx}px`;
+            ghost.style.top = `${cy}px`;
+            ghost.style.transform = `translate(-50%, -50%) scale(2.5) rotateY(1080deg)`;
+
+            setTimeout(() => {
+                // Fly back
+                ghost.style.transition = 'all 0.6s ease-in';
+                ghost.style.left = `${screenX}px`;
+                ghost.style.top = `${screenY}px`;
+                ghost.style.transform = `translate(-50%, -50%) scale(${scale}) rotateY(0deg)`;
+                
+                setTimeout(() => {
+                    ghost.remove();
+                    resolve();
+                }, 600);
+            }, 1500); // 1.5s pause to read it? Actually, it's face down so no need to read.
+        } else {
+            ghost.remove();
+            resolve();
+        }
+    });
+}
