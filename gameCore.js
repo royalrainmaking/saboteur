@@ -65,6 +65,7 @@ class Game {
         this.currentTurnIdx = 0;
         this.winner = null;    // 'miners' | 'saboteurs'
         this.messages = [];
+        this.lastDiscard = null;
         this._warnedDeckEmpty = false;
     }
 
@@ -93,8 +94,29 @@ class Game {
     }
 
     removePlayer(socketId) {
-        this.players = this.players.filter(p => p.id !== socketId);
-        if (this.players.length === 0) this.status = 'finished';
+        const pIdx = this.players.findIndex(p => p.id === socketId);
+        if (pIdx === -1) return;
+
+        this.players.splice(pIdx, 1);
+        
+        if (this.players.length === 0) {
+            this.status = 'finished';
+            return;
+        }
+
+        if (this.status === 'playing') {
+            if (this._checkSaboteurWin()) return;
+
+            if (pIdx < this.currentTurnIdx) {
+                this.currentTurnIdx--;
+            } else if (pIdx === this.currentTurnIdx) {
+                this.currentTurnIdx = this.currentTurnIdx % this.players.length;
+                if (this.players[this.currentTurnIdx].hand.length === 0) {
+                    this.currentTurnIdx = (this.currentTurnIdx - 1 + this.players.length) % this.players.length;
+                    this._nextTurn();
+                }
+            }
+        }
     }
 
     // ─── Game Start ───────────────────────────────────────────────────────────
@@ -184,13 +206,17 @@ class Game {
         const cardIdx = p.hand.findIndex(c => c.id === cardId);
         if (cardIdx === -1) return { error: 'ไม่พบการ์ดนี้' };
 
+        const discardedCard = p.hand[cardIdx];
+        this.lastDiscard = { playerName: p.name, card: discardedCard };
         p.hand.splice(cardIdx, 1);
         this._drawCard(p);
         this.addLog(`${p.name} ทิ้งการ์ด 1 ใบ`);
 
-        if (this._checkSaboteurWin()) return { success: true };
+        const actionDetails = { type: 'discard', player: p.name, card: discardedCard };
+
+        if (this._checkSaboteurWin()) return { success: true, actionDetails };
         this._nextTurn();
-        return { success: true };
+        return { success: true, actionDetails };
     }
 
     playCard(playerId, cardId, opts) {
@@ -217,6 +243,13 @@ class Game {
         const privateMessage = result.privateMessage || null;
         const mapReveal = result.mapReveal || null;
 
+        const actionDetails = {
+            type: card.type === 'path' ? 'playPath' : (card.actionType === 'map' ? 'mapReveal' : 'playAction'),
+            player: p.name,
+            card: card,
+            opts: opts || {}
+        };
+
         p.hand.splice(cardIdx, 1);
         this._drawCard(p);
 
@@ -224,7 +257,7 @@ class Game {
             if (this._checkSaboteurWin()) {
                 p.privateMessage = privateMessage;
                 p.mapReveal = mapReveal;
-                return { success: true };
+                return { success: true, actionDetails };
             }
             this._nextTurn();
         }
@@ -233,7 +266,7 @@ class Game {
         p.privateMessage = privateMessage;
         p.mapReveal = mapReveal;
 
-        return { success: true };
+        return { success: true, actionDetails };
     }
 
     // ─── Internal: Action Cards ───────────────────────────────────────────────
@@ -262,7 +295,11 @@ class Game {
             const posKey = `${opts.x},${opts.y}`;
             const cell = this.board[posKey];
             if (!cell || !cell.isGoal) return { error: 'เป้าหมายไม่ใช่การ์ดขุมทรัพย์' };
-            this.addLog(`🗺️ ${player.name} ส่องดูการ์ดขุมทรัพย์`);
+            let posName = 'ปริศนา';
+            if (opts.y === -2) posName = 'บน';
+            else if (opts.y === 0) posName = 'กลาง';
+            else if (opts.y === 2) posName = 'ล่าง';
+            this.addLog(`🗺️ ${player.name} ส่องดูการ์ดขุมทรัพย์ใบ${posName}`);
             return { success: true, mapReveal: { goalType: cell.goalType } };
 
         } else if (card.actionType === 'rockfall') {
@@ -447,7 +484,8 @@ class Game {
             deckSize: this.deck.length,
             currentTurnIdx: this.currentTurnIdx,
             winner: this.winner,
-            messages: this.messages
+            messages: this.messages,
+            lastDiscard: this.lastDiscard
         };
     }
 }
