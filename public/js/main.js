@@ -498,10 +498,10 @@ function renderHand() {
 
         if (c.id === selectedCardId) {
             cdiv.classList.add('selected');
-            if (cardRotated) cdiv.style.transform = 'translateY(-15px) rotate(180deg)';
         }
 
-        cdiv.innerHTML = generateCardHTML(c);
+        const isSelectedRotated = (c.id === selectedCardId && cardRotated && c.type === 'path');
+        cdiv.innerHTML = generateCardHTML(c, isSelectedRotated);
 
         const isBroken = me.brokenTools.pickaxe || me.brokenTools.lantern || me.brokenTools.cart;
 
