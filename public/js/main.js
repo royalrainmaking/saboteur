@@ -408,6 +408,8 @@ const ACTION_ICONS = {
     'fix-pickaxe_lantern': { icon: '<span class="material-symbols-rounded" style="font-size: 30px; letter-spacing: -10px;">hardware tungsten</span>', label: 'ซ่อม 2 อย่าง', cls: 'act-fix' },
     'fix-pickaxe_cart': { icon: '<span class="material-symbols-rounded" style="font-size: 30px; letter-spacing: -10px;">hardware shopping_cart</span>', label: 'ซ่อม 2 อย่าง', cls: 'act-fix' },
     'fix-lantern_cart': { icon: '<span class="material-symbols-rounded" style="font-size: 30px; letter-spacing: -10px;">tungsten shopping_cart</span>', label: 'ซ่อม 2 อย่าง', cls: 'act-fix' },
+};
+
 function generateCardHTML(card, rotated = false) {
     const bgDef = `
         <pattern id="rock-${card.id || Math.random()}" width="40" height="40" patternUnits="userSpaceOnUse">
