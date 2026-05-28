@@ -387,36 +387,7 @@ body {
 .path-center {
     position: absolute;
     background-color: var(--path-color);
-    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.6);
-}
-
-.path-n, .path-s {
-    background: repeating-linear-gradient(
-        0deg,
-        rgba(78, 52, 46, 0.95),
-        rgba(78, 52, 46, 0.95) 4px,
-        var(--path-color) 4px,
-        var(--path-color) 12px
-    );
-    border-left: 2px solid #3e2723;
-    border-right: 2px solid #3e2723;
-}
-
-.path-e, .path-w {
-    background: repeating-linear-gradient(
-        90deg,
-        rgba(78, 52, 46, 0.95),
-        rgba(78, 52, 46, 0.95) 4px,
-        var(--path-color) 4px,
-        var(--path-color) 12px
-    );
-    border-top: 2px solid #3e2723;
-    border-bottom: 2px solid #3e2723;
-}
-
-.path-center {
-    background-color: #5d4037;
-    border-radius: 4px;
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
 }
 
 .path-n {
