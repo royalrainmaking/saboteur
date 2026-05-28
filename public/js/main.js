@@ -435,20 +435,25 @@ function generateCardHTML(card, rotated = false) {
         return `
             <svg viewBox="0 0 90 130" style="position:absolute; inset:0; width:100%; height:100%; z-index:0; border-radius: 6px;">
                 <defs>
-                    <pattern id="rock-bg" width="30" height="30" patternUnits="userSpaceOnUse">
-                        <rect width="30" height="30" fill="#3e2723" />
-                        <circle cx="5" cy="5" r="3" fill="#2d1a15" opacity="0.8" />
-                        <circle cx="20" cy="15" r="4" fill="#2d1a15" opacity="0.5" />
-                        <circle cx="10" cy="25" r="2" fill="#4e342e" opacity="0.6" />
+                    <pattern id="bg-dirt" width="90" height="130" patternUnits="userSpaceOnUse">
+                        <image href="assets/dirt.png" width="90" height="130" preserveAspectRatio="xMidYMid slice" />
+                    </pattern>
+                    <pattern id="path-sand" width="90" height="130" patternUnits="userSpaceOnUse">
+                        <image href="assets/sand.png" width="90" height="130" preserveAspectRatio="xMidYMid slice" />
                     </pattern>
                 </defs>
-                <rect width="90" height="130" fill="url(#rock-bg)" />
+                <rect width="90" height="130" fill="url(#bg-dirt)" />
                 <rect width="90" height="130" fill="none" stroke="#1c0f0a" stroke-width="6" opacity="0.6" />
                 
                 <!-- Tunnel base (dark shadow walls) -->
                 <path d="${d}" stroke="#110a05" stroke-width="32" stroke-linecap="square" fill="none" />
-                <!-- Tunnel floor (sandy path) -->
-                <path d="${d}" stroke="#c59b6d" stroke-width="26" stroke-linecap="square" fill="none" />
+                
+                <!-- Tunnel floor (photorealistic sand) -->
+                <path d="${d}" stroke="url(#path-sand)" stroke-width="26" stroke-linecap="square" fill="none" />
+                
+                <!-- Inner Tunnel Shadow for depth -->
+                <path d="${d}" stroke="rgba(0,0,0,0.4)" stroke-width="26" stroke-linecap="square" fill="none" style="mix-blend-mode: multiply;" />
+                
                 <!-- Railway Ties (Wood) -->
                 <path d="${d}" stroke="#4e342e" stroke-width="14" stroke-dasharray="3,7" stroke-linecap="square" fill="none" />
                 
