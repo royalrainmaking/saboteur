@@ -411,6 +411,16 @@ const ACTION_ICONS = {
 };
 
 function generateCardHTML(card, rotated = false) {
+    const bgDef = `
+        <pattern id="rock-${card.id || Math.random()}" width="40" height="40" patternUnits="userSpaceOnUse">
+            <rect width="40" height="40" fill="#795548" />
+            <path d="M 5 5 Q 15 2 18 10 Q 15 15 5 15 Q 2 10 5 5" fill="#5D4037" />
+            <path d="M 25 25 Q 35 22 38 30 Q 35 35 25 35 Q 22 30 25 25" fill="#4E342E" />
+            <circle cx="35" cy="10" r="3" fill="#8D6E63" />
+            <circle cx="10" cy="30" r="4" fill="#6D4C41" />
+        </pattern>
+    `;
+
     if (card.type === 'path') {
         let [n, e, s, w] = card.exits;
         if (rotated) {
@@ -418,18 +428,14 @@ function generateCardHTML(card, rotated = false) {
         }
         
         let d = '';
-        // Wiggly, organic curves for a cartoon style
-        // They start perpendicular at the edges so cards connect seamlessly
         if (n) d += 'M 45 0 C 45 20, 35 35, 45 65 ';
         if (e) d += 'M 90 65 C 70 65, 55 75, 45 65 ';
         if (s) d += 'M 45 130 C 45 110, 55 95, 45 65 ';
         if (w) d += 'M 0 65 C 20 65, 35 55, 45 65 ';
-        
         if (!d) d = 'M 45 65 L 45 65 ';
         
         let deadEndHTML = '';
         if (card.deadEnd) {
-            // Cartoonish blockage (rubble + cross)
             deadEndHTML = `
                 <circle cx="45" cy="65" r="16" fill="#5D4037" stroke="#3E2723" stroke-width="3" />
                 <circle cx="35" cy="58" r="8" fill="#795548" stroke="#3E2723" stroke-width="2" />
@@ -440,28 +446,12 @@ function generateCardHTML(card, rotated = false) {
         
         return `
             <svg viewBox="0 0 90 130" style="position:absolute; inset:0; width:100%; height:100%; z-index:0; border-radius: 6px;">
-                <defs>
-                    <pattern id="cartoon-rock" width="40" height="40" patternUnits="userSpaceOnUse">
-                        <rect width="40" height="40" fill="#795548" /> <!-- Lighter cartoon brown -->
-                        <!-- Cartoon stones -->
-                        <path d="M 5 5 Q 15 2 18 10 Q 15 15 5 15 Q 2 10 5 5" fill="#5D4037" />
-                        <path d="M 25 25 Q 35 22 38 30 Q 35 35 25 35 Q 22 30 25 25" fill="#4E342E" />
-                        <circle cx="35" cy="10" r="3" fill="#8D6E63" />
-                        <circle cx="10" cy="30" r="4" fill="#6D4C41" />
-                    </pattern>
-                </defs>
-                
-                <!-- Background -->
-                <rect width="90" height="130" fill="url(#cartoon-rock)" />
+                <defs>${bgDef}</defs>
+                <rect width="90" height="130" fill="url(#rock-${card.id || 'path'})" />
                 <rect width="90" height="130" fill="none" stroke="#3E2723" stroke-width="8" />
                 
-                <!-- Tunnel Outline (Thick dark stroke for cartoon style) -->
                 <path d="${d}" stroke="#3E2723" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-                
-                <!-- Tunnel Floor (Bright cartoon sand) -->
                 <path d="${d}" stroke="#FFCC80" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-                
-                <!-- Wooden Rail Ties -->
                 <path d="${d}" stroke="#8D6E63" stroke-width="14" stroke-dasharray="4,10" stroke-linecap="round" stroke-linejoin="round" fill="none" />
                 
                 ${deadEndHTML}
@@ -471,7 +461,25 @@ function generateCardHTML(card, rotated = false) {
     if (card.type === 'action') {
         const key = card.target ? `${card.actionType}-${card.target}` : card.actionType;
         const info = ACTION_ICONS[key] || { icon: '❓', label: card.actionType, cls: '' };
-        return `<div class="action-content ${info.cls}"><div class="action-icon">${info.icon}</div><div class="action-label">${info.label}</div></div>`;
+        
+        let overlayColor = 'rgba(0,0,0,0.2)';
+        if (info.cls === 'act-break') overlayColor = 'rgba(229, 57, 53, 0.6)';
+        else if (info.cls === 'act-fix') overlayColor = 'rgba(67, 160, 71, 0.6)';
+        else if (info.cls === 'act-map') overlayColor = 'rgba(25, 118, 210, 0.6)';
+        else if (info.cls === 'act-rockfall') overlayColor = 'rgba(97, 97, 97, 0.7)';
+
+        return `
+            <svg viewBox="0 0 90 130" style="position:absolute; inset:0; width:100%; height:100%; z-index:0; border-radius: 6px;">
+                <defs>${bgDef}</defs>
+                <rect width="90" height="130" fill="url(#rock-${card.id || 'act'})" />
+                <rect width="90" height="130" fill="${overlayColor}" />
+                <rect width="90" height="130" fill="none" stroke="#3E2723" stroke-width="8" />
+            </svg>
+            <div class="action-content ${info.cls}" style="background: transparent; z-index:1;">
+                <div class="action-icon" style="font-size: 36px; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.8));">${info.icon}</div>
+                <div class="action-label" style="text-shadow: 0 2px 4px #000; font-size: 12px; margin-top: 5px;">${info.label}</div>
+            </div>
+        `;
     }
     return '';
 }
