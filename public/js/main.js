@@ -492,30 +492,34 @@ function renderHand() {
     const me = gameState.me;
     if (!me) return;
 
+    const isMyTurn = gameState.players[gameState.currentTurnIdx]?.id === myId;
+
     for (const c of me.hand) {
         const cdiv = document.createElement('div');
-        cdiv.className = `hand-card${c.type === 'action' ? ' action-card' : ''}${c.deadEnd ? ' dead-end' : ''}`;
+        cdiv.style.position = 'relative';
+        cdiv.style.display = 'inline-block';
+        const cardEl = document.createElement('div');
+        cardEl.className = `hand-card${c.type === 'action' ? ' action-card' : ''}${c.deadEnd ? ' dead-end' : ''}`;
 
         if (c.id === selectedCardId) {
-            cdiv.classList.add('selected');
+            cardEl.classList.add('selected');
         }
 
         const isSelectedRotated = (c.id === selectedCardId && cardRotated && c.type === 'path');
-        cdiv.innerHTML = generateCardHTML(c, isSelectedRotated);
+        cardEl.innerHTML = generateCardHTML(c, isSelectedRotated);
 
         const isBroken = me.brokenTools.pickaxe || me.brokenTools.lantern || me.brokenTools.cart;
 
-        cdiv.draggable = true;
-        cdiv.ondragstart = (e) => {
+        cardEl.draggable = true;
+        cardEl.ondragstart = (e) => {
             selectedCardId = c.id;
             e.dataTransfer.setData('text/plain', c.id);
 
-            // Build a rotated ghost image when card is rotated
             if (cardRotated && c.type === 'path') {
                 const ghost = document.createElement('div');
                 ghost.id = 'drag-ghost';
-                const w = cdiv.offsetWidth || 90;
-                const h = cdiv.offsetHeight || 130;
+                const w = cardEl.offsetWidth || 90;
+                const h = cardEl.offsetHeight || 130;
                 ghost.className = 'hand-card' + (c.deadEnd ? ' dead-end' : '');
                 ghost.innerHTML = generateCardHTML(c, true);
                 ghost.style.cssText = `
@@ -530,21 +534,20 @@ function renderHand() {
                 e.dataTransfer.setDragImage(ghost, w / 2, h / 2);
             }
 
-            // Re-render so the board highlights valid slots immediately while dragging
             setTimeout(() => render(), 10);
         };
 
-        cdiv.ondragend = () => {
+        cardEl.ondragend = () => {
             const ghost = document.getElementById('drag-ghost');
             if (ghost) ghost.remove();
         };
 
-        cdiv.addEventListener('click', () => {
+        cardEl.addEventListener('click', () => {
             if (c.type === 'path' && isBroken) {
                 showToast('❌ ติดอุปกรณ์พัง! ลงทางเดินไม่ได้ต้องซ่อมหรือทิ้งการ์ด');
             }
             const wasSelected = selectedCardId === c.id;
-            
+
             if (wasSelected && c.type === 'action' && (c.actionType === 'break' || c.actionType === 'fix')) {
                 if (gameState.players[gameState.currentTurnIdx]?.id === myId) {
                     showTargetPlayerModal(c);
@@ -555,6 +558,43 @@ function renderHand() {
                 render();
             }
         });
+
+        cdiv.appendChild(cardEl);
+
+        // Rotate button: only show on selected path card, rendered directly on card (not in hand-controls)
+        if (c.id === selectedCardId && c.type === 'path' && isMyTurn) {
+            const rotBtn = document.createElement('button');
+            rotBtn.title = 'หมุนการ์ด';
+            rotBtn.style.cssText = `
+                position: absolute;
+                bottom: -28px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 100;
+                background: linear-gradient(135deg, #1e88e5, #1565c0);
+                color: white;
+                border: none;
+                border-radius: 12px;
+                padding: 4px 10px;
+                font-size: 12px;
+                font-weight: bold;
+                cursor: pointer;
+                white-space: nowrap;
+                box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+                pointer-events: all;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            `;
+            rotBtn.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px">sync</span> หมุน`;
+            rotBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                cardRotated = !cardRotated;
+                render();
+            });
+            cdiv.appendChild(rotBtn);
+        }
+
         handEl.appendChild(cdiv);
     }
 
@@ -612,11 +652,8 @@ function renderHandControls() {
     if (!card) return;
 
     if (card.type === 'path') {
-        const rotBtn = document.createElement('button');
-        rotBtn.className = isMyTurn ? 'rot-btn-beautiful' : 'rot-btn-beautiful disabled';
-        rotBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size: 1.2rem;">sync</span> หมุนการ์ด';
-        if (isMyTurn) rotBtn.onclick = () => { cardRotated = !cardRotated; render(); };
-        controls.appendChild(rotBtn);
+        // Rotate button is now rendered directly on the card in renderHand()
+        // Nothing to show here.
 
     } else if (card.type === 'action' && (card.actionType === 'break' || card.actionType === 'fix')) {
         controls.innerHTML = `<span style="color:var(--gold); font-size: 0.9rem; margin-top: 5px; font-weight: bold;">👆 เลือกรายชื่อในแถบขวา หรือแตะซ้ำเพื่อใช้การ์ด</span>`;
