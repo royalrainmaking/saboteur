@@ -130,6 +130,15 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('checkSession', ({ room, userId }, callback) => {
+        room = (room || "").toUpperCase();
+        if (games[room] && games[room].players.find(p => p.userId === userId)) {
+            if (typeof callback === 'function') callback({ valid: true });
+        } else {
+            if (typeof callback === 'function') callback({ valid: false });
+        }
+    });
+
     socket.on('reconnectPlayer', ({ room, userId }) => {
         room = (room || "").toUpperCase();
         if (!games[room]) {

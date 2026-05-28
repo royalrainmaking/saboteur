@@ -1180,36 +1180,48 @@ function playAnimation(animData) {
     });
 }
 // ─── Reconnection check on startup ───────────────────────────────────────────
-(function checkSavedSession() {
+function checkSavedSession() {
     const saved = localStorage.getItem('saboteur_session');
     if (saved) {
         try {
             const session = JSON.parse(saved);
             if (session && session.roomCode && session.userId) {
-                const modal = document.getElementById('reconnect-prompt-modal');
-                if (modal) {
-                    modal.classList.remove('hidden');
-                    
-                    document.getElementById('btn-reconnect-yes').onclick = () => {
-                        modal.classList.add('hidden');
-                        playerName = session.playerName;
-                        selectedAvatar = session.avatar;
-                        roomCode = session.roomCode;
-                        socket.emit('reconnectPlayer', { room: session.roomCode, userId: session.userId });
-                    };
-                    
-                    document.getElementById('btn-reconnect-no').onclick = () => {
-                        modal.classList.add('hidden');
+                // Ping server to see if this session still exists
+                socket.emit('checkSession', { room: session.roomCode, userId: session.userId }, (res) => {
+                    if (res && res.valid) {
+                        const modal = document.getElementById('reconnect-prompt-modal');
+                        if (modal) {
+                            modal.classList.remove('hidden');
+                            
+                            document.getElementById('btn-reconnect-yes').onclick = () => {
+                                modal.classList.add('hidden');
+                                playerName = session.playerName;
+                                selectedAvatar = session.avatar;
+                                roomCode = session.roomCode;
+                                socket.emit('reconnectPlayer', { room: session.roomCode, userId: session.userId });
+                            };
+                            
+                            document.getElementById('btn-reconnect-no').onclick = () => {
+                                modal.classList.add('hidden');
+                                localStorage.removeItem('saboteur_session');
+                            };
+                        }
+                    } else {
+                        // Session is dead on the server (e.g. server restart), silently clear it
                         localStorage.removeItem('saboteur_session');
-                    };
-                }
+                    }
+                });
             }
         } catch (e) {
             console.error('Failed to parse saved session:', e);
             localStorage.removeItem('saboteur_session');
         }
     }
-})();
+}
+
+// Call check immediately on load
+checkSavedSession();
+
 window.kickPlayer = (playerId) => {
     socket.emit('kickPlayer', { targetPlayerId: playerId });
 };
