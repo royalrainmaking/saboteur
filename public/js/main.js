@@ -360,9 +360,7 @@ function renderSidebar() {
         }
 
         const TOOL_IMG = { pickaxe: '/img/pickax.png', lantern: '/img/oil-lamp.png', cart: '/img/cart.png' };
-        const toolHtml = ['pickaxe', 'lantern', 'cart'].map(t => `
-            <img src="${TOOL_IMG[t]}" class="mini-tool-img ${p.brokenTools[t] ? 'broken' : 'fine'}" title="${t}">
-        `).join('');
+        const toolHtml = ['pickaxe', 'lantern', 'cart'].map(t => toolImgHtml(TOOL_IMG[t], p.brokenTools[t], t)).join('');
 
         const offlineLabel = p.connected ? '' : ' <span style="color:var(--danger); font-size:0.75rem; font-weight:bold;">(🔴 Offline)</span>';
 
@@ -397,6 +395,19 @@ function renderSidebar() {
 }
 
 // ─── Card HTML ────────────────────────────────────────────────────────────────
+
+function toolImgHtml(src, broken, title = '') {
+    const overlay = broken ? `
+        <svg viewBox="0 0 24 24" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
+            <circle cx="12" cy="12" r="11" fill="rgba(200,0,0,0.18)" stroke="#e53935" stroke-width="2"/>
+            <line x1="6" y1="6" x2="18" y2="18" stroke="#e53935" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="18" y1="6" x2="6" y2="18" stroke="#e53935" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>` : '';
+    return `<span style="position:relative;display:inline-flex;width:24px;height:24px;" title="${title}">
+        <img src="${src}" style="width:24px;height:24px;object-fit:contain;${broken ? 'opacity:0.5;' : ''}">
+        ${overlay}
+    </span>`;
+}
 const ACTION_ICONS = {
     map: { icon: '<img src="/img/stone.png" style="width:36px;height:36px;object-fit:contain">', label: 'แผนที่', cls: 'act-map' },
     rockfall: { icon: '<img src="/img/stone.png" style="width:36px;height:36px;object-fit:contain">', label: 'ถ้ำถล่ม', cls: 'act-rockfall' },
@@ -911,9 +922,8 @@ function showTargetPlayerModal(card) {
         const btn = document.createElement('button');
         btn.className = 'target-player-btn';
 
-        const toolHtml = ['pickaxe', 'lantern', 'cart'].map(t => `
-            <img src="${TOOL_IMG[t]}" class="mini-tool-img ${p.brokenTools[t] ? 'broken' : 'fine'}" title="${t}">
-        `).join('');
+        const TOOL_IMG = { pickaxe: '/img/pickax.png', lantern: '/img/oil-lamp.png', cart: '/img/cart.png' };
+        const toolHtml = ['pickaxe', 'lantern', 'cart'].map(t => toolImgHtml(TOOL_IMG[t], p.brokenTools[t], t)).join('');
 
         btn.innerHTML = `
             <div class="target-p-info">
