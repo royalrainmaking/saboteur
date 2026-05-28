@@ -643,26 +643,26 @@ body {
 }
 
 .hand-card {
-    width: 90px;
-    height: 130px;
+    width: 72px;
+    height: 104px;
     background: var(--card-bg);
-    border-radius: 8px;
-    border: 3px solid #1a1105;
+    border-radius: 7px;
+    border: 2px solid #1a1105;
     cursor: pointer;
     position: relative;
     transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
 }
 
 .hand-card:hover {
-    transform: translateY(-20px) scale(1.05);
-    box-shadow: 0 15px 25px rgba(0, 0, 0, 0.6);
+    transform: translateY(-14px) scale(1.05);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.6);
 }
 
 .hand-card.selected {
     border-color: var(--gold);
-    transform: translateY(-25px) scale(1.1);
-    box-shadow: 0 15px 30px var(--gold-glow);
+    transform: translateY(-18px) scale(1.1);
+    box-shadow: 0 12px 24px var(--gold-glow);
 }
 
 .hand-card.action-card {

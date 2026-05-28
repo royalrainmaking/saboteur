@@ -567,26 +567,25 @@ function renderHand() {
             rotBtn.title = 'หมุนการ์ด';
             rotBtn.style.cssText = `
                 position: absolute;
-                bottom: -28px;
+                bottom: -24px;
                 left: 50%;
                 transform: translateX(-50%);
                 z-index: 100;
                 background: linear-gradient(135deg, #1e88e5, #1565c0);
                 color: white;
                 border: none;
-                border-radius: 12px;
-                padding: 4px 10px;
-                font-size: 12px;
-                font-weight: bold;
+                border-radius: 50%;
+                width: 22px;
+                height: 22px;
+                padding: 0;
                 cursor: pointer;
-                white-space: nowrap;
-                box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+                box-shadow: 0 2px 6px rgba(0,0,0,0.5);
                 pointer-events: all;
                 display: flex;
                 align-items: center;
-                gap: 4px;
+                justify-content: center;
             `;
-            rotBtn.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px">sync</span> หมุน`;
+            rotBtn.innerHTML = `<span class="material-symbols-rounded" style="font-size:16px;line-height:1">sync</span>`;
             rotBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 cardRotated = !cardRotated;
