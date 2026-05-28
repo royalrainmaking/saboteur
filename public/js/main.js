@@ -441,41 +441,40 @@ function generateCardHTML(card, rotated = false) {
         }
 
         // Map exits pattern [N,E,S,W] → { file, rot }
-        // Cards are Portrait. Raw images are Landscape. We use rot 90 or 270 to fit them.
         const CARD_IMG_MAP = {
             // Normal (Directly from user's list)
-            '0101': { file: '1.PNG', rot: 90 },
-            '1111': { file: '2.PNG', rot: 90 },
-            '0111': { file: '3.PNG', rot: 90 },
-            '1001': { file: '4.PNG', rot: 90 },
-            '1011': { file: '5.PNG', rot: 90 },
-            '0011': { file: '6.PNG', rot: 90 },
-            '1010': { file: '7.PNG', rot: 90 },
+            '0101': { file: '1.PNG', rot: 0 },
+            '1111': { file: '2.PNG', rot: 0 },
+            '0111': { file: '3.PNG', rot: 0 },
+            '1001': { file: '4.PNG', rot: 0 },
+            '1011': { file: '5.PNG', rot: 0 },
+            '0011': { file: '6.PNG', rot: 0 },
+            '1010': { file: '7.PNG', rot: 0 },
 
-            // Missing normal (rot 270 flips the exits 180 degrees)
-            '1100': { file: '6.PNG', rot: 270 }, // N+E = S+W flipped
-            '0110': { file: '4.PNG', rot: 270 }, // E+S = N+W flipped
-            '1110': { file: '3.PNG', rot: 270 }, // N+E+S = E+S+W flipped
-            '1101': { file: '5.PNG', rot: 270 }, // N+E+W = N+S+W flipped
+            // Missing normal (rot 180 flips the exits)
+            '1100': { file: '6.PNG', rot: 180 }, // N+E = S+W flipped
+            '0110': { file: '4.PNG', rot: 180 }, // E+S = N+W flipped
+            '1110': { file: '3.PNG', rot: 180 }, // N+E+S = E+S+W flipped
+            '1101': { file: '5.PNG', rot: 180 }, // N+E+W = N+S+W flipped
 
             // Dead ends (Directly from user's list)
-            '0101_dead': { file: '8.PNG', rot: 90 },
-            '1111_dead': { file: '9.PNG', rot: 90 },
-            '0111_dead': { file: '10.PNG', rot: 90 },
-            '1001_dead': { file: '11.PNG', rot: 90 },
-            '1011_dead': { file: '12.PNG', rot: 90 },
-            '0011_dead': { file: '13.PNG', rot: 90 },
+            '0101_dead': { file: '8.PNG', rot: 0 },
+            '1111_dead': { file: '9.PNG', rot: 0 },
+            '0111_dead': { file: '10.PNG', rot: 0 },
+            '1001_dead': { file: '11.PNG', rot: 0 },
+            '1011_dead': { file: '12.PNG', rot: 0 },
+            '0011_dead': { file: '13.PNG', rot: 0 },
 
             // Missing dead ends
-            '1010_dead': { file: '7.PNG', rot: 90 }, // fallback to normal image + X
-            '1100_dead': { file: '13.PNG', rot: 270 }, // N+E dead = S+W dead flipped
-            '0110_dead': { file: '11.PNG', rot: 270 }, // E+S dead = N+W dead flipped
-            '1110_dead': { file: '10.PNG', rot: 270 }, // N+E+S dead = E+S+W dead flipped
-            '1101_dead': { file: '12.PNG', rot: 270 }  // N+E+W dead = N+S+W dead flipped
+            '1010_dead': { file: '7.PNG', rot: 0 }, // fallback to normal image + X
+            '1100_dead': { file: '13.PNG', rot: 180 }, // N+E dead = S+W dead flipped
+            '0110_dead': { file: '11.PNG', rot: 180 }, // E+S dead = N+W dead flipped
+            '1110_dead': { file: '10.PNG', rot: 180 }, // N+E+S dead = E+S+W dead flipped
+            '1101_dead': { file: '12.PNG', rot: 180 }  // N+E+W dead = N+S+W dead flipped
         };
         const key = `${n}${e}${s}${w}` + (card.deadEnd ? '_dead' : '');
         const fallbackKey = `${n}${e}${s}${w}`;
-        const imgData = CARD_IMG_MAP[key] || CARD_IMG_MAP[fallbackKey] || { file: '1.PNG', rot: 90 };
+        const imgData = CARD_IMG_MAP[key] || CARD_IMG_MAP[fallbackKey] || { file: '1.PNG', rot: 0 };
         const totalRot = imgData.rot;
 
         // Dead-end X overlay SVG (we still keep the red X for clarity if the image alone isn't obvious, or for missing dead ends)
@@ -493,8 +492,8 @@ function generateCardHTML(card, rotated = false) {
                 <img src="/img/card/${imgData.file}"
                      style="
                          position:absolute;
-                         width:${totalRot===90||totalRot===270 ? '145%' : '100%'};
-                         height:${totalRot===90||totalRot===270 ? 'auto' : '100%'};
+                         width: 100%;
+                         height: 100%;
                          top:50%; left:50%;
                          transform: translate(-50%,-50%) rotate(${totalRot}deg);
                          object-fit:cover;
