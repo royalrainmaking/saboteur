@@ -440,42 +440,38 @@ function generateCardHTML(card, rotated = false) {
             [n, e, s, w] = [s, w, n, e];
         }
 
-        // Images are landscape and cards are landscape. No base rotation needed.
-        // Missing combinations reuse images with a 180° rotation.
+        // Map exits pattern [N,E,S,W] → { file, rot }
+        // Cards are Portrait. Raw images are Landscape. We use rot 90 or 270 to fit them.
         const CARD_IMG_MAP = {
             // Normal
-            '1010': { file: '7.PNG', rot: 0 },
-            '0101': { file: '1.PNG', rot: 0 },
-            '1111': { file: '2.PNG', rot: 0 },
-            '0111': { file: '3.PNG', rot: 0 },
-            '1001': { file: '4.PNG', rot: 0 },
-            '1011': { file: '5.PNG', rot: 0 },
-            '0011': { file: '6.PNG', rot: 0 },
-            
-            // Missing normal (rotated 180)
-            '1100': { file: '6.PNG', rot: 180 }, // N+E = S+W rotated
-            '0110': { file: '4.PNG', rot: 180 }, // E+S = N+W rotated
-            '1110': { file: '3.PNG', rot: 180 }, // N+E+S = E+S+W rotated
-            '1101': { file: '5.PNG', rot: 180 }, // N+E+W = N+S+W rotated
+            '1010': { file: '1.PNG', rot: 90 },
+            '0101': { file: '7.PNG', rot: 90 },
+            '1111': { file: '2.PNG', rot: 90 },
+            '1001': { file: '6.PNG', rot: 90 },
+            '1100': { file: '4.PNG', rot: 90 },
+            '0110': { file: '6.PNG', rot: 270 },
+            '0011': { file: '4.PNG', rot: 270 },
+            '1110': { file: '3.PNG', rot: 90 },
+            '0111': { file: '5.PNG', rot: 270 },
+            '1011': { file: '3.PNG', rot: 90 },
+            '1101': { file: '5.PNG', rot: 90 },
 
             // Dead ends
-            '0101_dead': { file: '8.PNG', rot: 0 },
-            '1111_dead': { file: '9.PNG', rot: 0 },
-            '0111_dead': { file: '10.PNG', rot: 0 },
-            '1001_dead': { file: '11.PNG', rot: 0 },
-            '1011_dead': { file: '12.PNG', rot: 0 },
-            '0011_dead': { file: '13.PNG', rot: 0 },
-            
-            // Missing dead ends
-            '1010_dead': { file: '7.PNG', rot: 0 }, // fallback to normal image
-            '1100_dead': { file: '13.PNG', rot: 180 }, // N+E dead
-            '0110_dead': { file: '11.PNG', rot: 180 }, // E+S dead
-            '1110_dead': { file: '10.PNG', rot: 180 }, // N+E+S dead
-            '1101_dead': { file: '12.PNG', rot: 180 }, // N+E+W dead
+            '1010_dead': { file: '8.PNG', rot: 90 },
+            '0101_dead': { file: '7.PNG', rot: 90 }, // fallback to normal image + X
+            '1111_dead': { file: '9.PNG', rot: 90 },
+            '1001_dead': { file: '13.PNG', rot: 90 },
+            '1100_dead': { file: '11.PNG', rot: 90 },
+            '0110_dead': { file: '13.PNG', rot: 270 },
+            '0011_dead': { file: '11.PNG', rot: 270 },
+            '1110_dead': { file: '10.PNG', rot: 90 },
+            '0111_dead': { file: '12.PNG', rot: 270 },
+            '1011_dead': { file: '10.PNG', rot: 90 },
+            '1101_dead': { file: '12.PNG', rot: 90 }
         };
         const key = `${n}${e}${s}${w}` + (card.deadEnd ? '_dead' : '');
         const fallbackKey = `${n}${e}${s}${w}`;
-        const imgData = CARD_IMG_MAP[key] || CARD_IMG_MAP[fallbackKey] || { file: '1.PNG', rot: 0 };
+        const imgData = CARD_IMG_MAP[key] || CARD_IMG_MAP[fallbackKey] || { file: '1.PNG', rot: 90 };
         const totalRot = imgData.rot;
 
         // Dead-end X overlay SVG (we still keep the red X for clarity if the image alone isn't obvious, or for missing dead ends)
@@ -493,8 +489,8 @@ function generateCardHTML(card, rotated = false) {
                 <img src="/img/card/${imgData.file}"
                      style="
                          position:absolute;
-                         width: 100%;
-                         height: 100%;
+                         width:${totalRot===90||totalRot===270 ? '145%' : '100%'};
+                         height:${totalRot===90||totalRot===270 ? 'auto' : '100%'};
                          top:50%; left:50%;
                          transform: translate(-50%,-50%) rotate(${totalRot}deg);
                          object-fit:cover;
@@ -724,8 +720,8 @@ function renderBoard() {
     const container = document.getElementById('board-container');
     boardEl.innerHTML = '';
 
-    const CELL_W = 120;
-    const CELL_H = 90;
+    const CELL_W = 90;
+    const CELL_H = 120;
     const PAD = 1.5; // padding cells around the bounding box
 
     const b = gameState.board;
