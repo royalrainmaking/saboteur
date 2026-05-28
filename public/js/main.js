@@ -143,15 +143,15 @@ socket.on('mapReveal', ({ goalType }) => {
     const btn = document.getElementById('map-reveal-close');
 
     if (goalType === 'gold') {
-        icon.className = 'material-symbols-rounded';
-        icon.innerText = 'diamond';
+        icon.innerHTML = '<img src="/img/gold-ingots.png" style="width:60px;height:60px;object-fit:contain;">';
+        icon.className = '';
         text.innerText = 'นี่คือทองคำ!';
         text.style.color = '#fbc02d';
         document.getElementById('map-flip-back').style.borderColor = '#fbc02d';
     } else {
-        icon.className = 'material-symbols-rounded';
-        icon.innerText = 'landslide';
-        text.innerText = 'ก้อนถ่านหิน';
+        icon.innerHTML = '<img src="/img/stone.png" style="width:60px;height:60px;object-fit:contain;">';
+        icon.className = '';
+        text.innerText = 'ก้อนหิน';
         text.style.color = '#aaa';
         document.getElementById('map-flip-back').style.borderColor = '#555';
     }
@@ -359,8 +359,9 @@ function renderSidebar() {
             li.style.border = '1px dashed rgba(229, 57, 53, 0.4)';
         }
 
+        const TOOL_IMG = { pickaxe: '/img/pickax.png', lantern: '/img/oil-lamp.png', cart: '/img/cart.png' };
         const toolHtml = ['pickaxe', 'lantern', 'cart'].map(t => `
-            <span class="material-symbols-rounded mini-tool ${p.brokenTools[t] ? 'broken' : 'fine'}" title="${t}">${TOOL_ICON[t]}</span>
+            <img src="${TOOL_IMG[t]}" class="mini-tool-img ${p.brokenTools[t] ? 'broken' : 'fine'}" title="${t}">
         `).join('');
 
         const offlineLabel = p.connected ? '' : ' <span style="color:var(--danger); font-size:0.75rem; font-weight:bold;">(🔴 Offline)</span>';
@@ -397,17 +398,17 @@ function renderSidebar() {
 
 // ─── Card HTML ────────────────────────────────────────────────────────────────
 const ACTION_ICONS = {
-    map: { icon: '<span class="material-symbols-rounded" style="font-size: 32px;">map</span>', label: 'แผนที่', cls: 'act-map' },
-    rockfall: { icon: '<span class="material-symbols-rounded" style="font-size: 32px;">landslide</span>', label: 'ถ้ำถล่ม', cls: 'act-rockfall' },
-    'break-pickaxe': { icon: '<span class="material-symbols-rounded" style="font-size: 32px;">hardware</span>', label: 'พังจอบ', cls: 'act-break' },
-    'break-lantern': { icon: '<span class="material-symbols-rounded" style="font-size: 32px;">tungsten</span>', label: 'พังตะเกียง', cls: 'act-break' },
-    'break-cart': { icon: '<span class="material-symbols-rounded" style="font-size: 32px;">shopping_cart</span>', label: 'พังรถ', cls: 'act-break' },
-    'fix-pickaxe': { icon: '<span class="material-symbols-rounded" style="font-size: 32px;">hardware</span>', label: 'ซ่อมจอบ', cls: 'act-fix' },
-    'fix-lantern': { icon: '<span class="material-symbols-rounded" style="font-size: 32px;">tungsten</span>', label: 'ซ่อมตะเกียง', cls: 'act-fix' },
-    'fix-cart': { icon: '<span class="material-symbols-rounded" style="font-size: 32px;">shopping_cart</span>', label: 'ซ่อมรถ', cls: 'act-fix' },
-    'fix-pickaxe_lantern': { icon: '<span class="material-symbols-rounded" style="font-size: 30px; letter-spacing: -10px;">hardware tungsten</span>', label: 'ซ่อม 2 อย่าง', cls: 'act-fix' },
-    'fix-pickaxe_cart': { icon: '<span class="material-symbols-rounded" style="font-size: 30px; letter-spacing: -10px;">hardware shopping_cart</span>', label: 'ซ่อม 2 อย่าง', cls: 'act-fix' },
-    'fix-lantern_cart': { icon: '<span class="material-symbols-rounded" style="font-size: 30px; letter-spacing: -10px;">tungsten shopping_cart</span>', label: 'ซ่อม 2 อย่าง', cls: 'act-fix' },
+    map: { icon: '<img src="/img/stone.png" style="width:36px;height:36px;object-fit:contain">', label: 'แผนที่', cls: 'act-map' },
+    rockfall: { icon: '<img src="/img/stone.png" style="width:36px;height:36px;object-fit:contain">', label: 'ถ้ำถล่ม', cls: 'act-rockfall' },
+    'break-pickaxe': { icon: '<img src="/img/pickax.png" style="width:36px;height:36px;object-fit:contain">', label: 'พังจอบ', cls: 'act-break' },
+    'break-lantern': { icon: '<img src="/img/oil-lamp.png" style="width:36px;height:36px;object-fit:contain">', label: 'พังตะเกียง', cls: 'act-break' },
+    'break-cart': { icon: '<img src="/img/cart.png" style="width:36px;height:36px;object-fit:contain">', label: 'พังรถ', cls: 'act-break' },
+    'fix-pickaxe': { icon: '<img src="/img/pickax.png" style="width:36px;height:36px;object-fit:contain">', label: 'ซ่อมจอบ', cls: 'act-fix' },
+    'fix-lantern': { icon: '<img src="/img/oil-lamp.png" style="width:36px;height:36px;object-fit:contain">', label: 'ซ่อมตะเกียง', cls: 'act-fix' },
+    'fix-cart': { icon: '<img src="/img/cart.png" style="width:36px;height:36px;object-fit:contain">', label: 'ซ่อมรถ', cls: 'act-fix' },
+    'fix-pickaxe_lantern': { icon: '<div style="display:flex;gap:2px"><img src="/img/pickax.png" style="width:30px;height:30px;object-fit:contain"><img src="/img/oil-lamp.png" style="width:30px;height:30px;object-fit:contain"></div>', label: 'ซ่อม 2 อย่าง', cls: 'act-fix' },
+    'fix-pickaxe_cart': { icon: '<div style="display:flex;gap:2px"><img src="/img/pickax.png" style="width:30px;height:30px;object-fit:contain"><img src="/img/cart.png" style="width:30px;height:30px;object-fit:contain"></div>', label: 'ซ่อม 2 อย่าง', cls: 'act-fix' },
+    'fix-lantern_cart': { icon: '<div style="display:flex;gap:2px"><img src="/img/oil-lamp.png" style="width:30px;height:30px;object-fit:contain"><img src="/img/cart.png" style="width:30px;height:30px;object-fit:contain"></div>', label: 'ซ่อม 2 อย่าง', cls: 'act-fix' },
 };
 
 function generateCardHTML(card, rotated = false) {
@@ -907,14 +908,14 @@ function showTargetPlayerModal(card) {
     subtitle.innerText = `ใช้การ์ด '${info.label}' กับใครดี?`;
     listEl.innerHTML = '';
 
-    const TOOL_ICON = { pickaxe: 'hardware', lantern: 'tungsten', cart: 'shopping_cart' };
+    const TOOL_IMG = { pickaxe: '/img/pickax.png', lantern: '/img/oil-lamp.png', cart: '/img/cart.png' };
 
     for (const p of gameState.players) {
         const btn = document.createElement('button');
         btn.className = 'target-player-btn';
 
         const toolHtml = ['pickaxe', 'lantern', 'cart'].map(t => `
-            <span class="material-symbols-rounded mini-tool ${p.brokenTools[t] ? 'broken' : 'fine'}" title="${t}">${TOOL_ICON[t]}</span>
+            <img src="${TOOL_IMG[t]}" class="mini-tool-img ${p.brokenTools[t] ? 'broken' : 'fine'}" title="${t}">
         `).join('');
 
         btn.innerHTML = `

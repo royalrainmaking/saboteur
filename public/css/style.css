@@ -834,7 +834,21 @@ body {
     color: #555;
 }
 
+.mini-tool-img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    transition: filter 0.2s;
+}
 
+.mini-tool-img.fine {
+    filter: none;
+}
+
+.mini-tool-img.broken {
+    filter: grayscale(1) brightness(0.6) sepia(1) hue-rotate(-10deg) saturate(5);
+    opacity: 0.8;
+}
 
 .log-message.time {
     color: var(--text-dim);
