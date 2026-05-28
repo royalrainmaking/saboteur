@@ -430,19 +430,17 @@ function generateCardHTML(card, rotated = false) {
         }
         
         let d = '';
-        if (n) d += 'M 45 0 C 45 20, 40 40, 45 65 ';
-        if (e) d += 'M 90 65 C 70 65, 60 70, 45 65 ';
-        if (s) d += 'M 45 130 C 45 110, 50 90, 45 65 ';
-        if (w) d += 'M 0 65 C 20 65, 30 60, 45 65 ';
+        if (n) d += 'M 45 0 L 45 65 ';
+        if (e) d += 'M 90 65 L 45 65 ';
+        if (s) d += 'M 45 130 L 45 65 ';
+        if (w) d += 'M 0 65 L 45 65 ';
         if (!d) d = 'M 45 65 L 45 65 ';
         
         let deadEndHTML = '';
         if (card.deadEnd) {
             deadEndHTML = `
-                <circle cx="45" cy="65" r="16" fill="#9E9E9E" stroke="#757575" stroke-width="3" />
-                <circle cx="35" cy="58" r="8" fill="#E0E0E0" stroke="#757575" stroke-width="2" />
-                <circle cx="55" cy="72" r="10" fill="#BDBDBD" stroke="#757575" stroke-width="2" />
-                <path d="M 35 55 L 55 75 M 55 55 L 35 75" stroke="#FF5252" stroke-width="6" stroke-linecap="round" />
+                <circle cx="45" cy="65" r="12" fill="#9E9E9E" stroke="#616161" stroke-width="2" />
+                <path d="M 37 57 L 53 73 M 53 57 L 37 73" stroke="#EF5350" stroke-width="4" stroke-linecap="round" />
             `;
         }
         
@@ -450,11 +448,10 @@ function generateCardHTML(card, rotated = false) {
             <svg viewBox="0 0 90 130" style="position:absolute; inset:0; width:100%; height:100%; z-index:0; border-radius: 6px;">
                 <defs>${bgDef}</defs>
                 <rect width="90" height="130" fill="url(#${patternId})" />
-                <rect width="90" height="130" fill="none" stroke="#9E9E9E" stroke-width="8" />
+                <rect width="90" height="130" fill="none" stroke="#9E9E9E" stroke-width="6" />
                 
-                <path d="${d}" stroke="#757575" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-                <path d="${d}" stroke="#FAFAFA" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-                <path d="${d}" stroke="#8D6E63" stroke-width="14" stroke-dasharray="4,10" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                <path d="${d}" stroke="#5D4037" stroke-width="22" stroke-linecap="square" stroke-linejoin="miter" fill="none" />
+                <path d="${d}" stroke="#ECEFF1" stroke-width="14" stroke-linecap="square" stroke-linejoin="miter" fill="none" />
                 
                 ${deadEndHTML}
             </svg>
