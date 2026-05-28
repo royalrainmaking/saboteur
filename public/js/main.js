@@ -429,10 +429,10 @@ function generateCardHTML(card, rotated = false) {
         }
         
         let d = '';
-        if (n) d += 'M 45 0 C 45 20, 35 35, 45 65 ';
-        if (e) d += 'M 90 65 C 70 65, 55 75, 45 65 ';
-        if (s) d += 'M 45 130 C 45 110, 55 95, 45 65 ';
-        if (w) d += 'M 0 65 C 20 65, 35 55, 45 65 ';
+        if (n) d += 'M 45 0 C 45 20, 40 40, 45 65 ';
+        if (e) d += 'M 90 65 C 70 65, 60 70, 45 65 ';
+        if (s) d += 'M 45 130 C 45 110, 50 90, 45 65 ';
+        if (w) d += 'M 0 65 C 20 65, 30 60, 45 65 ';
         if (!d) d = 'M 45 65 L 45 65 ';
         
         let deadEndHTML = '';
