@@ -382,6 +382,15 @@ function renderSidebar() {
             }
         };
 
+        li.onclick = () => {
+            if (selectedCardId && gameState.players[gameState.currentTurnIdx]?.id === myId) {
+                const card = gameState.me?.hand.find(c => c.id === selectedCardId);
+                if (card && card.type === 'action' && (card.actionType === 'break' || card.actionType === 'fix')) {
+                    playActionCard(p.id);
+                }
+            }
+        };
+
         playersList.appendChild(li);
     });
 }
@@ -482,9 +491,17 @@ function renderHand() {
             if (c.type === 'path' && isBroken) {
                 showToast('❌ ติดอุปกรณ์พัง! ลงทางเดินไม่ได้ต้องซ่อมหรือทิ้งการ์ด');
             }
-            selectedCardId = (selectedCardId === c.id) ? null : c.id;
-            if (selectedCardId !== c.id) cardRotated = false;
-            render();
+            const wasSelected = selectedCardId === c.id;
+            
+            if (wasSelected && c.type === 'action' && (c.actionType === 'break' || c.actionType === 'fix')) {
+                if (gameState.players[gameState.currentTurnIdx]?.id === myId) {
+                    showTargetPlayerModal(c);
+                }
+            } else {
+                selectedCardId = wasSelected ? null : c.id;
+                if (selectedCardId !== c.id) cardRotated = false;
+                render();
+            }
         });
         handEl.appendChild(cdiv);
     }
@@ -497,33 +514,39 @@ function renderHandControls() {
     controls.innerHTML = '';
 
     const isMyTurn = gameState.players[gameState.currentTurnIdx]?.id === myId;
-
-    if (isMyTurn) {
-        const trashBtn = document.createElement('div');
-        trashBtn.className = 'trash-dropzone';
-        trashBtn.innerHTML = '🗑️ ลากมาทิ้งที่นี่ (หรือคลิกเพื่อทิ้ง)';
-        trashBtn.ondragover = (e) => { e.preventDefault(); trashBtn.classList.add('drag-over'); };
-        trashBtn.ondragleave = (e) => { trashBtn.classList.remove('drag-over'); };
-        trashBtn.ondrop = (e) => {
-            e.preventDefault();
-            trashBtn.classList.remove('drag-over');
-            const cardId = e.dataTransfer.getData('text/plain');
-            if (cardId) {
-                socket.emit('discardCard', { cardId });
-                selectedCardId = null;
-                cardRotated = false;
-            }
-        };
-        trashBtn.onclick = () => {
-            if (selectedCardId) {
-                socket.emit('discardCard', { cardId: selectedCardId });
-                selectedCardId = null;
-                cardRotated = false;
-            } else {
-                showToast('กรูณาเลือกการ์ดก่อนกดทิ้ง');
-            }
-        };
-        controls.appendChild(trashBtn);
+    
+    // Manage the fixed trash button
+    const trashBtn = document.getElementById('trash-dropzone-fixed');
+    if (trashBtn) {
+        if (isMyTurn) {
+            trashBtn.classList.remove('disabled');
+            trashBtn.ondragover = (e) => { e.preventDefault(); trashBtn.classList.add('drag-over'); };
+            trashBtn.ondragleave = (e) => { trashBtn.classList.remove('drag-over'); };
+            trashBtn.ondrop = (e) => {
+                e.preventDefault();
+                trashBtn.classList.remove('drag-over');
+                const cardId = e.dataTransfer.getData('text/plain');
+                if (cardId) {
+                    socket.emit('discardCard', { cardId });
+                    selectedCardId = null;
+                    cardRotated = false;
+                }
+            };
+            trashBtn.onclick = () => {
+                if (selectedCardId) {
+                    socket.emit('discardCard', { cardId: selectedCardId });
+                    selectedCardId = null;
+                    cardRotated = false;
+                } else {
+                    showToast('กรุณาเลือกการ์ดที่ต้องการทิ้ง แล้วคลิกที่ถังขยะ');
+                }
+            };
+        } else {
+            trashBtn.classList.add('disabled');
+            trashBtn.ondragover = null;
+            trashBtn.ondrop = null;
+            trashBtn.onclick = null;
+        }
     }
 
     if (!selectedCardId) {
@@ -538,17 +561,13 @@ function renderHandControls() {
 
     if (card.type === 'path') {
         const rotBtn = document.createElement('button');
-        rotBtn.className = isMyTurn ? 'active' : '';
-        rotBtn.innerText = '🔄 หมุน';
+        rotBtn.className = isMyTurn ? 'rot-btn-beautiful' : 'rot-btn-beautiful disabled';
+        rotBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size: 1.2rem;">sync</span> หมุนการ์ด';
         if (isMyTurn) rotBtn.onclick = () => { cardRotated = !cardRotated; render(); };
         controls.appendChild(rotBtn);
 
     } else if (card.type === 'action' && (card.actionType === 'break' || card.actionType === 'fix')) {
-        const playBtn = document.createElement('button');
-        playBtn.className = `play-btn${isMyTurn ? ' active' : ''}`;
-        playBtn.innerText = '▶ ใช้การ์ดใบนี้';
-        if (isMyTurn) playBtn.onclick = () => showTargetPlayerModal(card);
-        controls.appendChild(playBtn);
+        controls.innerHTML = `<span style="color:var(--gold); font-size: 0.9rem; margin-top: 5px; font-weight: bold;">👆 เลือกรายชื่อในแถบขวา หรือแตะซ้ำเพื่อใช้การ์ด</span>`;
 
     } else if (card.type === 'action') {
         const hintBtn = document.createElement('button');

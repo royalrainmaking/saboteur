@@ -113,10 +113,13 @@
                         </div>
                     </div>
 
-                    <div class="panel hand-panel" style="flex: 1;">
+                    <div class="panel hand-panel" style="flex: 1; display: flex; flex-direction: column;">
                         <h3>ไพ่ในมือของคุณ</h3>
                         <div class="hand-controls" id="hand-controls"></div>
-                        <div class="hand" id="hand"></div>
+                        <div class="hand" id="hand" style="flex: 1; overflow-y: auto;"></div>
+                        <div style="margin-top: 15px; display: flex; justify-content: center;">
+                            <div id="trash-dropzone-fixed" class="large-trash" title="ลากการ์ดมาทิ้งที่นี่ หรือเลือกการ์ดแล้วคลิก">🗑️</div>
+                        </div>
                     </div>
                 </div>
 
