@@ -409,7 +409,7 @@ function toolImgHtml(src, broken, title = '') {
     </span>`;
 }
 const ACTION_ICONS = {
-    map: { icon: '<img src="/img/stone.png" style="width:36px;height:36px;object-fit:contain">', label: 'แผนที่', cls: 'act-map' },
+    map: { icon: '<img src="/img/maps.png" style="width:36px;height:36px;object-fit:contain">', label: 'แผนที่', cls: 'act-map' },
     rockfall: { icon: '<img src="/img/stone.png" style="width:36px;height:36px;object-fit:contain">', label: 'ถ้ำถล่ม', cls: 'act-rockfall' },
     'break-pickaxe': { icon: '<img src="/img/pickax.png" style="width:36px;height:36px;object-fit:contain">', label: 'พังจอบ', cls: 'act-break' },
     'break-lantern': { icon: '<img src="/img/oil-lamp.png" style="width:36px;height:36px;object-fit:contain">', label: 'พังตะเกียง', cls: 'act-break' },
@@ -439,33 +439,51 @@ function generateCardHTML(card, rotated = false) {
         if (rotated) {
             [n, e, s, w] = [s, w, n, e];
         }
-        
-        let d = '';
-        if (n) d += 'M 45 0 L 45 65 ';
-        if (e) d += 'M 90 65 L 45 65 ';
-        if (s) d += 'M 45 130 L 45 65 ';
-        if (w) d += 'M 0 65 L 45 65 ';
-        if (!d) d = 'M 45 65 L 45 65 ';
-        
-        let deadEndHTML = '';
-        if (card.deadEnd) {
-            deadEndHTML = `
-                <circle cx="45" cy="65" r="12" fill="#9E9E9E" stroke="#616161" stroke-width="2" />
-                <path d="M 37 57 L 53 73 M 53 57 L 37 73" stroke="#EF5350" stroke-width="4" stroke-linecap="round" />
-            `;
-        }
-        
+
+        // Map exits pattern [N,E,S,W] → { file, extraRot }
+        // Images are landscape; base 90° rotation converts them to portrait.
+        // ExtraRot adds on top of that base 90° for patterns sharing the same artwork.
+        const CARD_IMG_MAP = {
+            '1010': { file: '1.PNG',  rot: 90  },  // N+S straight
+            '0101': { file: '5.PNG',  rot: 90  },  // E+W straight
+            '1111': { file: '2.PNG',  rot: 90  },  // 4-way
+            '0110': { file: '6.PNG',  rot: 90  },  // E+S corner
+            '1100': { file: '6.PNG',  rot: 0   },  // N+E corner  (card6 unrotated)
+            '0011': { file: '6.PNG',  rot: 180 },  // S+W corner  (card6 + 180)
+            '1001': { file: '4.PNG',  rot: 90  },  // N+W corner
+            '1110': { file: '10.PNG', rot: 90  },  // N+E+S T-junction
+            '0111': { file: '10.PNG', rot: 270 },  // E+S+W T-junction (card10 + 180)
+            '1011': { file: '8.PNG',  rot: 90  },  // N+S+W T-junction
+            '1101': { file: '11.PNG', rot: 90  },  // N+E+W T-junction
+        };
+        const key = `${n}${e}${s}${w}`;
+        const imgData = CARD_IMG_MAP[key] || { file: '1.PNG', rot: 90 };
+        const totalRot = imgData.rot;
+
+        // Dead-end X overlay SVG
+        const deadEndOverlay = card.deadEnd ? `
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:3;">
+                <svg viewBox="0 0 40 40" style="width:50%;height:50%;opacity:0.9">
+                    <circle cx="20" cy="20" r="18" fill="rgba(180,0,0,0.2)" stroke="#e53935" stroke-width="3"/>
+                    <line x1="8" y1="8" x2="32" y2="32" stroke="#e53935" stroke-width="4" stroke-linecap="round"/>
+                    <line x1="32" y1="8" x2="8" y2="32" stroke="#e53935" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+            </div>` : '';
+
         return `
-            <svg viewBox="0 0 90 130" style="position:absolute; inset:0; width:100%; height:100%; z-index:0; border-radius: 6px;">
-                <defs>${bgDef}</defs>
-                <rect width="90" height="130" fill="url(#${patternId})" />
-                <rect width="90" height="130" fill="none" stroke="#9E9E9E" stroke-width="6" />
-                
-                <path d="${d}" stroke="#5D4037" stroke-width="22" stroke-linecap="square" stroke-linejoin="miter" fill="none" />
-                <path d="${d}" stroke="#ECEFF1" stroke-width="14" stroke-linecap="square" stroke-linejoin="miter" fill="none" />
-                
-                ${deadEndHTML}
-            </svg>
+            <div style="position:absolute;inset:0;overflow:hidden;border-radius:6px;">
+                <img src="/img/card/${imgData.file}"
+                     style="
+                         position:absolute;
+                         width:${totalRot===90||totalRot===270 ? '145%' : '100%'};
+                         height:${totalRot===90||totalRot===270 ? 'auto' : '100%'};
+                         top:50%; left:50%;
+                         transform: translate(-50%,-50%) rotate(${totalRot}deg);
+                         object-fit:cover;
+                     "
+                     draggable="false">
+                ${deadEndOverlay}
+            </div>
         `;
     }
     if (card.type === 'action') {
