@@ -418,44 +418,51 @@ function generateCardHTML(card, rotated = false) {
         }
         
         let d = '';
-        if (n) d += 'M 45 65 L 45 0 ';
-        if (e) d += 'M 45 65 L 90 65 ';
-        if (s) d += 'M 45 65 L 45 130 ';
-        if (w) d += 'M 45 65 L 0 65 ';
+        // Wiggly, organic curves for a cartoon style
+        // They start perpendicular at the edges so cards connect seamlessly
+        if (n) d += 'M 45 0 C 45 20, 35 35, 45 65 ';
+        if (e) d += 'M 90 65 C 70 65, 55 75, 45 65 ';
+        if (s) d += 'M 45 130 C 45 110, 55 95, 45 65 ';
+        if (w) d += 'M 0 65 C 20 65, 35 55, 45 65 ';
+        
         if (!d) d = 'M 45 65 L 45 65 ';
         
         let deadEndHTML = '';
         if (card.deadEnd) {
+            // Cartoonish blockage (rubble + cross)
             deadEndHTML = `
-                <circle cx="45" cy="65" r="14" fill="#ff5252" stroke="#b71c1c" stroke-width="3" />
-                <path d="M 38 58 L 52 72 M 52 58 L 38 72" stroke="#fff" stroke-width="4" stroke-linecap="round" />
+                <circle cx="45" cy="65" r="16" fill="#5D4037" stroke="#3E2723" stroke-width="3" />
+                <circle cx="35" cy="58" r="8" fill="#795548" stroke="#3E2723" stroke-width="2" />
+                <circle cx="55" cy="72" r="10" fill="#8D6E63" stroke="#3E2723" stroke-width="2" />
+                <path d="M 35 55 L 55 75 M 55 55 L 35 75" stroke="#FF5252" stroke-width="6" stroke-linecap="round" />
             `;
         }
         
         return `
             <svg viewBox="0 0 90 130" style="position:absolute; inset:0; width:100%; height:100%; z-index:0; border-radius: 6px;">
                 <defs>
-                    <pattern id="bg-dirt" width="90" height="130" patternUnits="userSpaceOnUse">
-                        <image href="assets/dirt.png" width="90" height="130" preserveAspectRatio="xMidYMid slice" />
-                    </pattern>
-                    <pattern id="path-sand" width="90" height="130" patternUnits="userSpaceOnUse">
-                        <image href="assets/sand.png" width="90" height="130" preserveAspectRatio="xMidYMid slice" />
+                    <pattern id="cartoon-rock" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <rect width="40" height="40" fill="#795548" /> <!-- Lighter cartoon brown -->
+                        <!-- Cartoon stones -->
+                        <path d="M 5 5 Q 15 2 18 10 Q 15 15 5 15 Q 2 10 5 5" fill="#5D4037" />
+                        <path d="M 25 25 Q 35 22 38 30 Q 35 35 25 35 Q 22 30 25 25" fill="#4E342E" />
+                        <circle cx="35" cy="10" r="3" fill="#8D6E63" />
+                        <circle cx="10" cy="30" r="4" fill="#6D4C41" />
                     </pattern>
                 </defs>
-                <rect width="90" height="130" fill="url(#bg-dirt)" />
-                <rect width="90" height="130" fill="none" stroke="#1c0f0a" stroke-width="6" opacity="0.6" />
                 
-                <!-- Tunnel base (dark shadow walls) -->
-                <path d="${d}" stroke="#110a05" stroke-width="32" stroke-linecap="square" fill="none" />
+                <!-- Background -->
+                <rect width="90" height="130" fill="url(#cartoon-rock)" />
+                <rect width="90" height="130" fill="none" stroke="#3E2723" stroke-width="8" />
                 
-                <!-- Tunnel floor (photorealistic sand) -->
-                <path d="${d}" stroke="url(#path-sand)" stroke-width="26" stroke-linecap="square" fill="none" />
+                <!-- Tunnel Outline (Thick dark stroke for cartoon style) -->
+                <path d="${d}" stroke="#3E2723" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" fill="none" />
                 
-                <!-- Inner Tunnel Shadow for depth -->
-                <path d="${d}" stroke="rgba(0,0,0,0.4)" stroke-width="26" stroke-linecap="square" fill="none" style="mix-blend-mode: multiply;" />
+                <!-- Tunnel Floor (Bright cartoon sand) -->
+                <path d="${d}" stroke="#FFCC80" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none" />
                 
-                <!-- Railway Ties (Wood) -->
-                <path d="${d}" stroke="#4e342e" stroke-width="14" stroke-dasharray="3,7" stroke-linecap="square" fill="none" />
+                <!-- Wooden Rail Ties -->
+                <path d="${d}" stroke="#8D6E63" stroke-width="14" stroke-dasharray="4,10" stroke-linecap="round" stroke-linejoin="round" fill="none" />
                 
                 ${deadEndHTML}
             </svg>
