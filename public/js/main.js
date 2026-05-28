@@ -761,6 +761,18 @@ function renderBoard() {
         if (cell.isGoal) {
             cdiv.classList.add('goal-card');
             cdiv.classList.add(cell.faceDown ? 'face-down' : `${cell.goalType}-revealed`);
+            
+            if (!cell.faceDown) {
+                // Show the path background
+                cdiv.innerHTML = generateCardHTML(cell);
+                // Add the gold/stone overlay on top
+                const imgSrc = cell.goalType === 'gold' ? '/img/gold-ingots.png' : '/img/stone.png';
+                cdiv.innerHTML += `
+                    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:none;">
+                        <img src="${imgSrc}" style="width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.6));">
+                    </div>
+                `;
+            }
         }
 
         if (!cell.isGoal) {
