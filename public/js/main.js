@@ -435,10 +435,7 @@ function generateCardHTML(card, rotated = false) {
     `;
 
     if (card.type === 'path') {
-        let [n, e, s, w] = card.exits;
-        if (rotated) {
-            [n, e, s, w] = [s, w, n, e];
-        }
+        const [n, e, s, w] = card.exits;
 
         // Map exits pattern [N,E,S,W] → { file, rot }
         const CARD_IMG_MAP = {
@@ -475,7 +472,7 @@ function generateCardHTML(card, rotated = false) {
         const key = `${n}${e}${s}${w}` + (card.deadEnd ? '_dead' : '');
         const fallbackKey = `${n}${e}${s}${w}`;
         const imgData = CARD_IMG_MAP[key] || CARD_IMG_MAP[fallbackKey] || { file: '1.PNG', rot: 0 };
-        const totalRot = imgData.rot;
+        const totalRot = (imgData.rot + (rotated ? 180 : 0)) % 360;
 
         // Dead-end X overlay SVG (we still keep the red X for clarity if the image alone isn't obvious, or for missing dead ends)
         const deadEndOverlay = card.deadEnd ? `
