@@ -702,20 +702,28 @@ function isPlacementValid(board, x, y, card, rotated) {
     }
     if (!hasNeighbor) return false;
 
-    // BFS simulation
-    const simBoard = { ...board, [`${x},${y}`]: { type: 'path', exits, deadEnd: card.deadEnd } };
+    // BFS simulation without cloning to prevent UI freeze on large boards
+    const targetKey = `${x},${y}`;
+    const targetNode = { type: 'path', exits, deadEnd: card.deadEnd };
+
     const visited = new Set(['0,0']);
     const queue = ['0,0'];
     while (queue.length > 0) {
         const curr = queue.shift();
         const [cx, cy] = curr.split(',').map(Number);
-        const cNode = simBoard[curr];
+
+        let cNode = board[curr];
+        if (curr === targetKey) cNode = targetNode;
+
         if (!cNode) continue;
         for (const d of DIRS) {
             if (!cNode.exits[d.eOut]) continue;
             const nk = `${cx + d.dx},${cy + d.dy}`;
             if (visited.has(nk)) continue;
-            const nNode = simBoard[nk];
+
+            let nNode = board[nk];
+            if (nk === targetKey) nNode = targetNode;
+
             if (!nNode || !nNode.exits[d.eIn]) continue;
             visited.add(nk);
             if (!nNode.deadEnd) queue.push(nk);

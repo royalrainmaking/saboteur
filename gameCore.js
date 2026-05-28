@@ -205,15 +205,27 @@ class Game {
 
     _assignRoles() {
         const poolCfg = ROLE_POOLS[this.players.length] || { saboteurs: 1, miners: this.players.length };
-        const pool = [
-            ...Array(poolCfg.saboteurs).fill('saboteur'),
-            ...Array(poolCfg.miners).fill('miner')
-        ];
-        // Fisher-Yates shuffle
-        for (let i = pool.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [pool[i], pool[j]] = [pool[j], pool[i]];
+        let valid = false;
+        let pool = [];
+
+        while (!valid) {
+            pool = [
+                ...Array(poolCfg.saboteurs).fill('saboteur'),
+                ...Array(poolCfg.miners).fill('miner')
+            ];
+            // Fisher-Yates shuffle
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+
+            // Ensure at least 1 saboteur is dealt to players
+            const dealt = pool.slice(0, this.players.length);
+            if (dealt.includes('saboteur')) {
+                valid = true;
+            }
         }
+
         // Deal roles to players (leaving 1 card face down)
         this.players.forEach((p, i) => p.role = pool[i]);
     }
