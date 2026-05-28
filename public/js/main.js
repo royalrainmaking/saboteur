@@ -579,7 +579,12 @@ function renderHand() {
                 e.dataTransfer.setDragImage(ghost, w / 2, h / 2);
             }
 
-            setTimeout(() => render(), 10);
+            setTimeout(() => {
+                renderBoard();
+                renderHandControls();
+                document.querySelectorAll('.hand-card').forEach(el => el.classList.remove('selected'));
+                cardEl.classList.add('selected');
+            }, 10);
         };
 
         cardEl.ondragend = () => {
