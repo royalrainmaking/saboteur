@@ -411,8 +411,9 @@ const ACTION_ICONS = {
 };
 
 function generateCardHTML(card, rotated = false) {
+    const patternId = card.id ? `rock-${card.id}` : `rock-pat-${Math.floor(Math.random() * 1000000)}`;
     const bgDef = `
-        <pattern id="rock-${card.id || Math.random()}" width="40" height="40" patternUnits="userSpaceOnUse">
+        <pattern id="${patternId}" width="40" height="40" patternUnits="userSpaceOnUse">
             <rect width="40" height="40" fill="#E0E0E0" />
             <path d="M 5 5 Q 15 2 18 10 Q 15 15 5 15 Q 2 10 5 5" fill="#BDBDBD" />
             <path d="M 25 25 Q 35 22 38 30 Q 35 35 25 35 Q 22 30 25 25" fill="#9E9E9E" />
@@ -447,7 +448,7 @@ function generateCardHTML(card, rotated = false) {
         return `
             <svg viewBox="0 0 90 130" style="position:absolute; inset:0; width:100%; height:100%; z-index:0; border-radius: 6px;">
                 <defs>${bgDef}</defs>
-                <rect width="90" height="130" fill="url(#rock-${card.id || 'path'})" />
+                <rect width="90" height="130" fill="url(#${patternId})" />
                 <rect width="90" height="130" fill="none" stroke="#9E9E9E" stroke-width="8" />
                 
                 <path d="${d}" stroke="#757575" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" fill="none" />
