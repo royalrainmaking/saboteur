@@ -991,7 +991,9 @@ function renderLastDiscard() {
     }
     
     panel.style.display = 'block';
-    info.innerText = `โดย ${gameState.lastDiscard.playerName}`;
+    
+    const isAction = gameState.lastDiscard.type === 'action';
+    info.innerText = isAction ? `ใช้โดย ${gameState.lastDiscard.playerName}` : `ทิ้งโดย ${gameState.lastDiscard.playerName}`;
     
     const card = gameState.lastDiscard.card;
     cardEl.className = `hand-card${card.type === 'action' ? ' action-card' : ''}${card.deadEnd ? ' dead-end' : ''}`;
@@ -1004,7 +1006,13 @@ window.addEventListener('resize', () => { if (gameState && gameState.status !== 
 // ─── Animations ───────────────────────────────────────────────────────────────
 function playAnimation(animData) {
     return new Promise((resolve) => {
-        const { type, player, card, opts } = animData;
+        const { type, player, playerId, card, opts } = animData;
+        
+        if (type === 'mapReveal' && playerId === myId) {
+            resolve();
+            return;
+        }
+
         const ghost = document.createElement('div');
         ghost.className = `ghost-card ${card.type === 'action' ? 'action-card' : ''} ${card.deadEnd ? 'dead-end' : ''}`;
         ghost.innerHTML = generateCardHTML(card, opts && opts.rotated);
@@ -1100,7 +1108,13 @@ function playAnimation(animData) {
                 }, 500);
             }, 700);
         } else if (type === 'mapReveal') {
-            // Start at target on board
+            // Start at bottom center
+            ghost.style.left = `${cx}px`;
+            ghost.style.top = `${window.innerHeight}px`;
+            ghost.style.transform = `translate(-50%, -50%) scale(0.5)`;
+            void ghost.offsetWidth;
+
+            // Calculate target on board
             const boardEl = document.getElementById('board');
             let scale = 1;
             if (boardEl && boardEl.style.transform) {
@@ -1129,33 +1143,17 @@ function playAnimation(animData) {
             const screenX = bRect.left + (targetLeft * scale);
             const screenY = bRect.top + (targetTop * scale);
 
-            ghost.className = 'ghost-card goal-card face-down';
-            ghost.innerHTML = '';
-            
+            // Fly directly to the goal card and disappear smoothly
+            ghost.style.transition = 'all 0.6s ease-in-out';
             ghost.style.left = `${screenX}px`;
             ghost.style.top = `${screenY}px`;
             ghost.style.transform = `translate(-50%, -50%) scale(${scale})`;
-
-            void ghost.offsetWidth;
-
-            // Fly to center and spin
-            ghost.style.transition = 'all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-            ghost.style.left = `${cx}px`;
-            ghost.style.top = `${cy}px`;
-            ghost.style.transform = `translate(-50%, -50%) scale(2.5) rotateY(1080deg)`;
+            ghost.style.opacity = '0';
 
             setTimeout(() => {
-                // Fly back
-                ghost.style.transition = 'all 0.6s ease-in';
-                ghost.style.left = `${screenX}px`;
-                ghost.style.top = `${screenY}px`;
-                ghost.style.transform = `translate(-50%, -50%) scale(${scale}) rotateY(0deg)`;
-                
-                setTimeout(() => {
-                    ghost.remove();
-                    resolve();
-                }, 600);
-            }, 1500); // 1.5s pause to read it? Actually, it's face down so no need to read.
+                ghost.remove();
+                resolve();
+            }, 600);
         } else {
             ghost.remove();
             resolve();

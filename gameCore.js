@@ -285,7 +285,7 @@ class Game {
         if (cardIdx === -1) return { error: 'ไม่พบการ์ดนี้' };
 
         const discardedCard = p.hand[cardIdx];
-        this.lastDiscard = { playerName: p.name, card: discardedCard };
+        this.lastDiscard = { playerName: p.name, card: discardedCard, type: 'discard' };
         p.hand.splice(cardIdx, 1);
         this._drawCard(p);
         this.addLog(`${p.name} ทิ้งการ์ด 1 ใบ`);
@@ -318,12 +318,17 @@ class Game {
 
         if (result.error) return result;
 
+        if (card.type === 'action') {
+            this.lastDiscard = { playerName: p.name, card: card, type: 'action' };
+        }
+
         const privateMessage = result.privateMessage || null;
         const mapReveal = result.mapReveal || null;
 
         const actionDetails = {
             type: card.type === 'path' ? 'playPath' : (card.actionType === 'map' ? 'mapReveal' : 'playAction'),
             player: p.name,
+            playerId: p.id,
             card: card,
             opts: opts || {}
         };
