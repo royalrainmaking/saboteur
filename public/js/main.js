@@ -365,11 +365,11 @@ function renderSidebar() {
         const offlineLabel = p.connected ? '' : ' <span style="color:var(--danger); font-size:0.75rem; font-weight:bold;">(🔴 Offline)</span>';
 
         li.innerHTML = `
-            <div style="display:flex;align-items:center;gap:10px;">
-                <span class="player-avatar" style="width:32px;height:32px;font-size:1.2rem;border:1px solid rgba(255,255,255,0.1);">${p.avatar || '🧔'}</span>
-                <span class="player-name" style="${!p.connected ? 'color: #888;' : ''}">${p.name}${p.id === myId ? ' (คุณ)' : ''}${offlineLabel} [${p.handSize}]</span>
+            <div style="display:flex;align-items:center;gap:10px; flex:1; min-width:0;">
+                <span class="player-avatar" style="width:32px;height:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:1.2rem;border:1px solid rgba(255,255,255,0.1);">${p.avatar || '🧔'}</span>
+                <span class="player-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis; ${!p.connected ? 'color: #888;' : ''}">${p.name}${p.id === myId ? ' (คุณ)' : ''}${offlineLabel} [${p.handSize}]</span>
             </div>
-            <div class="player-tools">${toolHtml}</div>
+            <div class="player-tools" style="flex-shrink:0; margin-left:10px;">${toolHtml}</div>
         `;
         li.ondragover = (e) => e.preventDefault();
         li.ondrop = (e) => {
