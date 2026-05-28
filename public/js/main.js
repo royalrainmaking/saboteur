@@ -416,13 +416,44 @@ function generateCardHTML(card, rotated = false) {
         if (rotated) {
             [n, e, s, w] = [s, w, n, e];
         }
+        
+        let d = '';
+        if (n) d += 'M 45 65 L 45 0 ';
+        if (e) d += 'M 45 65 L 90 65 ';
+        if (s) d += 'M 45 65 L 45 130 ';
+        if (w) d += 'M 45 65 L 0 65 ';
+        if (!d) d = 'M 45 65 L 45 65 ';
+        
+        let deadEndHTML = '';
+        if (card.deadEnd) {
+            deadEndHTML = `
+                <circle cx="45" cy="65" r="14" fill="#ff5252" stroke="#b71c1c" stroke-width="3" />
+                <path d="M 38 58 L 52 72 M 52 58 L 38 72" stroke="#fff" stroke-width="4" stroke-linecap="round" />
+            `;
+        }
+        
         return `
-            ${n ? '<div class="path-n"></div>' : ''}
-            ${e ? '<div class="path-e"></div>' : ''}
-            ${s ? '<div class="path-s"></div>' : ''}
-            ${w ? '<div class="path-w"></div>' : ''}
-            <div class="path-center"></div>
-            ${card.deadEnd ? '<div class="dead-end-marker">✕</div>' : ''}
+            <svg viewBox="0 0 90 130" style="position:absolute; inset:0; width:100%; height:100%; z-index:0; border-radius: 6px;">
+                <defs>
+                    <pattern id="rock-bg" width="30" height="30" patternUnits="userSpaceOnUse">
+                        <rect width="30" height="30" fill="#3e2723" />
+                        <circle cx="5" cy="5" r="3" fill="#2d1a15" opacity="0.8" />
+                        <circle cx="20" cy="15" r="4" fill="#2d1a15" opacity="0.5" />
+                        <circle cx="10" cy="25" r="2" fill="#4e342e" opacity="0.6" />
+                    </pattern>
+                </defs>
+                <rect width="90" height="130" fill="url(#rock-bg)" />
+                <rect width="90" height="130" fill="none" stroke="#1c0f0a" stroke-width="6" opacity="0.6" />
+                
+                <!-- Tunnel base (dark shadow walls) -->
+                <path d="${d}" stroke="#110a05" stroke-width="32" stroke-linecap="square" fill="none" />
+                <!-- Tunnel floor (sandy path) -->
+                <path d="${d}" stroke="#c59b6d" stroke-width="26" stroke-linecap="square" fill="none" />
+                <!-- Railway Ties (Wood) -->
+                <path d="${d}" stroke="#4e342e" stroke-width="14" stroke-dasharray="3,7" stroke-linecap="square" fill="none" />
+                
+                ${deadEndHTML}
+            </svg>
         `;
     }
     if (card.type === 'action') {
