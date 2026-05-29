@@ -485,7 +485,7 @@ function generateCardHTML(card, rotated = false) {
             </div>` : '';
 
         return `
-            <div style="position:absolute;inset:0;overflow:hidden;border-radius:6px;">
+            <div style="position:absolute;inset:0;overflow:hidden;border-radius:6px;border:2px solid #fff;box-sizing:border-box;">
                 <img src="/img/card/${imgData.file}"
                      style="
                          position:absolute;
@@ -511,7 +511,7 @@ function generateCardHTML(card, rotated = false) {
         else if (info.cls === 'act-rockfall') overlayColor = 'rgba(97, 97, 97, 0.5)';
 
         return `
-            <svg viewBox="0 0 90 130" style="position:absolute; inset:0; width:100%; height:100%; z-index:0; border-radius: 6px;">
+            <svg viewBox="0 0 90 130" style="position:absolute; inset:0; width:100%; height:100%; z-index:0; border-radius: 6px; border: 2px solid #fff; box-sizing: border-box;">
                 <defs>${bgDef}</defs>
                 <rect width="90" height="130" fill="url(#rock-${card.id || 'act'})" />
                 <rect width="90" height="130" fill="${overlayColor}" />
