@@ -49,14 +49,14 @@ const DECK_COMPOSITION = {
 const SABOTEUR_COUNTS = { 3: 1, 4: 1, 5: 2, 6: 2, 7: 3, 8: 3, 9: 3, 10: 4 };
 
 const ROLE_POOLS = {
-    3: { saboteurs: 1, miners: 3 }, // 4 cards, deal 3
-    4: { saboteurs: 1, miners: 4 }, // 5 cards, deal 4
-    5: { saboteurs: 2, miners: 4 }, // 6 cards, deal 5
-    6: { saboteurs: 2, miners: 5 }, // 7 cards, deal 6
-    7: { saboteurs: 3, miners: 5 }, // 8 cards, deal 7
-    8: { saboteurs: 3, miners: 6 }, // 9 cards, deal 8
-    9: { saboteurs: 3, miners: 7 }, // 10 cards, deal 9
-    10: { saboteurs: 4, miners: 7 } // 11 cards, deal 10
+    3: { saboteurs: 2, miners: 2 }, // 4 cards, deal 3
+    4: { saboteurs: 2, miners: 3 }, // 5 cards, deal 4
+    5: { saboteurs: 3, miners: 3 }, // 6 cards, deal 5
+    6: { saboteurs: 3, miners: 4 }, // 7 cards, deal 6
+    7: { saboteurs: 4, miners: 4 }, // 8 cards, deal 7
+    8: { saboteurs: 4, miners: 5 }, // 9 cards, deal 8
+    9: { saboteurs: 5, miners: 5 }, // 10 cards, deal 9
+    10: { saboteurs: 5, miners: 6 } // 11 cards, deal 10
 };
 
 // Neighbor directions: [dx, dy, exitOut, exitIn]
