@@ -451,8 +451,8 @@ function generateCardHTML(card, rotated = false) {
             // Missing normal (rot 180 flips the exits)
             '1100': { file: '6.PNG', rot: 180 }, // N+E = S+W flipped
             '0110': { file: '4.PNG', rot: 180 }, // E+S = N+W flipped
-            '1110': { file: '3.PNG', rot: 180 }, // N+E+S = E+S+W flipped
-            '1101': { file: '5.PNG', rot: 180 }, // N+E+W = N+S+W flipped
+            '1101': { file: '3.PNG', rot: 180 }, // N+E+W = E+S+W flipped
+            '1110': { file: '5.PNG', rot: 180 }, // N+E+S = N+S+W flipped
 
             // Dead ends (Directly from user's list)
             '0101_dead': { file: '8.PNG', rot: 0 },
@@ -466,8 +466,8 @@ function generateCardHTML(card, rotated = false) {
             '1010_dead': { file: '7.PNG', rot: 0 }, // fallback to normal image + X
             '1100_dead': { file: '13.PNG', rot: 180 }, // N+E dead = S+W dead flipped
             '0110_dead': { file: '11.PNG', rot: 180 }, // E+S dead = N+W dead flipped
-            '1110_dead': { file: '10.PNG', rot: 180 }, // N+E+S dead = E+S+W dead flipped
-            '1101_dead': { file: '12.PNG', rot: 180 }  // N+E+W dead = N+S+W dead flipped
+            '1101_dead': { file: '10.PNG', rot: 180 }, // N+E+W dead = E+S+W dead flipped
+            '1110_dead': { file: '12.PNG', rot: 180 }  // N+E+S dead = N+S+W dead flipped
         };
         const key = `${n}${e}${s}${w}` + (card.deadEnd ? '_dead' : '');
         const fallbackKey = `${n}${e}${s}${w}`;
